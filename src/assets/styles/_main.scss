@@ -1,9 +1,26 @@
 :root {
-  --color-text-primary: #fff;
+  --color-blue: #007AFF;
+  --color-white: #fff;
+
+  --color-text-primary: var(--color-white);
   --color-page-bg: #1b1b1d;
+
   --color-header-bg: rgb(255 255 255 / 8%);
+
+  --color-chechbox-bg: rgb(255 255 255 / 8%);
+  --color-chechbox-bg-active: var(--color-blue);
+
+  --color-picker-subtitle: rgb(255 255 255 / 64%);
+
+  --color-date-picker-bg: rgb(255 255 255 / 4%);
+
   --size-font-small: 11px;
+  --size-font-large: 20px;
+
   --size-line-height-small: 14px;
+  --size-line-height-medium: 16px;
+  --size-line-height-large: 28px;
+
   --size-icon: 16px;
 }
 
