@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import CheckboxItem from '@/components/checkbox-item.vue'
 import CheckboxGroup from '@/components/checkbox-group.vue'
-import { onMounted } from 'vue'
 
 const props = defineProps<{
   available_days: string[]
@@ -9,10 +8,6 @@ const props = defineProps<{
 }>()
 
 const selectedDay = defineModel<string>()
-
-onMounted(() => {
-  selectedDay.value = props.current_date
-})
 
 const formatDate = (dateString: string) => {
   const date = new Date(dateString)

@@ -1,15 +1,15 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted } from 'vue'
 import { useBookingStore } from '@/stores/booking.ts'
 import AppHeader from '@/components/app-header.vue'
 import { storeToRefs } from 'pinia'
 import DatePicker from '@/components/date-picker.vue'
+import ZonePicker from '@/components/zone-picker.vue'
 
 const bookingStore = useBookingStore()
 
-const { restaurant, available_days, current_day } = storeToRefs(bookingStore)
-
-const selectedDate = ref('')
+const { restaurant, available_days, current_day, zones, selectedZones, selectedDate } =
+  storeToRefs(bookingStore)
 
 onMounted(() => {
   bookingStore.getBookingData()
@@ -24,11 +24,14 @@ onMounted(() => {
       <div class="pickers__group">
         <h3 class="pickers__subtitle">Дата</h3>
         <date-picker
-          v-if="current_day"
           :available_days="available_days"
           :current_date="current_day"
           v-model="selectedDate"
         />
+      </div>
+      <div class="pickers__group">
+        <h3 class="pickers__subtitle">Отображаемые зоны</h3>
+        <zone-picker :zones="zones" v-model="selectedZones" />
       </div>
     </section>
   </div>

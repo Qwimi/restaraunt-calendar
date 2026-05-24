@@ -1,4 +1,4 @@
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 import type { Booking, Restaurant, Table } from '@/types'
 import { bookingApi } from '@/api/booking.ts'
@@ -8,6 +8,28 @@ export const useBookingStore = defineStore('booking', () => {
   const current_day = ref<Booking['current_day']>('')
   const restaurant = ref<Restaurant>()
   const tables = ref<Table[]>([])
+
+  const selectedDate = ref('')
+
+  const zones = computed(() => Array.from(new Set(tables.value.map((table) => table.zone))))
+  const selectedZones = ref<Table['zone'][]>([])
+
+  const visibleTables = computed(() =>
+    tables.value
+      .filter((table) => selectedZones.value.includes(table.zone))
+  )
+
+  const visibleOrders = computed(() =>
+    visibleTables.value.flatMap(({ orders }) =>
+      orders.filter((order) => order.start_time.startsWith(selectedDate.value)),
+    )
+  )
+
+  const visibleReservation = computed(() =>
+    visibleTables.value.flatMap(({ reservations }) =>
+      reservations.filter((reservation) => reservation.seating_time.startsWith(selectedDate.value)),
+    ),
+  )
 
   const currentTime = ref<string>()
   let timeIntervalId: ReturnType<typeof setInterval> | null = null
@@ -42,10 +64,25 @@ export const useBookingStore = defineStore('booking', () => {
     restaurant.value = data.restaurant
     tables.value = data.tables
 
+    selectedDate.value = current_day.value
+
     startTimeUpdates()
 
     return data
   }
 
-  return { getBookingData, available_days, current_day, restaurant, tables, currentTime }
+  return {
+    getBookingData,
+    available_days,
+    current_day,
+    restaurant,
+    tables,
+    currentTime,
+    selectedDate,
+    zones,
+    selectedZones,
+    visibleTables,
+    visibleOrders,
+    visibleReservation,
+  }
 })
