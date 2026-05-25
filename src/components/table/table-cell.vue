@@ -6,6 +6,7 @@ import { addMinutesToDate, formatDateToString, parseStringToDate } from '@/compo
 const props = defineProps<{
   time: string
   tableId: Table['id']
+  zone: Table['zone']
 }>()
 
 const addMinutes = (timeStr: string, minsToAdd: number): string =>
@@ -17,8 +18,8 @@ const subSlots = computed(() => [
 ])
 
 const emit = defineEmits<{
-  'start-select': [string, string, string]
-  select: [string, string, string]
+  'start-select': [Table['id'], string, string, Table['zone']]
+  select: [Table['id'], string, string, Table['zone']]
   'end-select': []
 }>()
 </script>
@@ -33,8 +34,8 @@ const emit = defineEmits<{
         :data-time-end="slot.end"
         :data-table-id="props.tableId"
         class="timetable-cell__sub-slot"
-        @mousedown.prevent="emit('start-select', props.tableId, slot.start, slot.end)"
-        @mouseenter="emit('select', props.tableId, slot.start, slot.end)"
+        @mousedown.prevent="emit('start-select', props.tableId, slot.start, slot.end, props.zone)"
+        @mouseenter="emit('select', props.tableId, slot.start, slot.end, props.zone)"
         @mouseup="emit('end-select')"
       >
         {{ slot.start }}

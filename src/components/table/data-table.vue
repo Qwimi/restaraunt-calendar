@@ -14,6 +14,7 @@ interface SelectionPoint {
   startTime: string
   endTime: string
   table: string
+  zone: string
 }
 
 const isDragging = ref(false)
@@ -23,15 +24,10 @@ const pointA = ref<SelectionPoint | null>(null)
 const pointB = ref<SelectionPoint | null>(null)
 
 const selectionArea = computed(() => {
-  if (!pointA.value) return
+  if (!pointA.value || !pointB.value) return
 
-  const startTimes = [pointA.value.startTime, pointB.value?.startTime].filter(
-    (t): t is string => !!t,
-  )
-  const endTimes = [pointA.value.endTime, pointB.value?.endTime].filter((t): t is string => !!t)
-
-  const startTime = getMinTimeStr(startTimes)
-  const endTime = getMaxTimeStr(endTimes)
+  const startTime = getMinTimeStr([pointA.value.startTime, pointB.value.startTime])
+  const endTime = getMaxTimeStr([pointA.value.endTime, pointB.value?.endTime])
   const duration = getTimeDuration(startTime, endTime)
 
   const aIndex = props.visibleTableCells.findIndex((table) => table.id === pointA.value?.table)
@@ -58,16 +54,41 @@ const selectionArea = computed(() => {
   }
 })
 
-const startDragging = (table: string, startTime: string, endTime: string) => {
-  isDragging.value = true
+const validPointBTable = (table: string, zone: string) => {
+  if (pointA.value!.zone === zone) {
+    return { table, zone }
+  }
+  // не даем забронировать стол в другой зоне
+  const aIndex = props.visibleTableCells.findIndex((table) => table.id === pointA.value!.table)
+  const currentIndex = props.visibleTableCells.findIndex((tableCell) => tableCell.id === table)
 
-  pointA.value = { table, startTime, endTime }
+  const isMovingForward = currentIndex > aIndex
+
+  const aZoneTables = props.visibleTableCells.filter((t) => t.zone === pointA.value!.zone)
+
+  const boundaryTable = isMovingForward ? aZoneTables.at(-1) : aZoneTables[0]
+
+  return {
+    table: boundaryTable!.id,
+    zone: pointA.value!.zone,
+  }
 }
 
-const dragging = (table: string, startTime: string, endTime: string) => {
+const startDragging = (table: string, startTime: string, endTime: string, zone: string) => {
+  isDragging.value = true
+
+  // задаем стартовую точку только если ее еще нет(т.е. в начале нового выделения)
+  if (!pointA.value) {
+    pointA.value = { table, startTime, endTime, zone }
+  }
+
+  pointB.value = { startTime, endTime, ...validPointBTable(table, zone) }
+}
+
+const dragging = (table: string, startTime: string, endTime: string, zone: string) => {
   if (!isDragging.value) return
 
-  pointB.value = { table, startTime, endTime }
+  pointB.value = { startTime, endTime, ...validPointBTable(table, zone) }
 }
 
 const endDragging = () => {
@@ -140,6 +161,7 @@ onUnmounted(() => window.removeEventListener('mouseup', endDragging))
             :key="table.id"
             :time="time"
             :table-id="table.id"
+            :zone="table.zone"
             class="table__cell"
             @start-select="startDragging"
             @select="dragging"
@@ -165,8 +187,8 @@ $border-style: 1px solid var(--color-table-border);
 
 .table-wrapper {
   overflow: auto;
-  height: 100%;
-  width: 100%;
+  overflow-x: scroll;
+  min-width: 0;
   position: relative;
 
   &__selection-overlay {
@@ -197,6 +219,15 @@ $border-style: 1px solid var(--color-table-border);
   border-spacing: 0;
   border-collapse: separate;
   table-layout: fixed;
+  display: table;
+  width: max-content;
+
+  thead {
+    position: sticky;
+    top: 0;
+    background-color: var(--color-page-bg);
+    z-index: 2;
+  }
 
   font-size: var(--size-font-small);
   line-height: var(--size-line-height-small);
@@ -211,6 +242,9 @@ $border-style: 1px solid var(--color-table-border);
 
     height: var(--size-cell-height);
     color: var(--color-table-time-text);
+    position: sticky;
+    left: 0;
+    z-index: 1;
   }
 }
 </style>

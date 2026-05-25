@@ -44,18 +44,19 @@ onMounted(() => {
       </div>
     </section>
 
-    <section class="table-section">
-      <data-table :time-cells="visibleTimeCells" :visible-table-cells="visibleTableCells" />
-    </section>
+    <data-table :time-cells="visibleTimeCells" :visible-table-cells="visibleTableCells" />
   </div>
 </template>
 
 <style lang="scss" scoped>
 .main {
   padding-block: 32px;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-rows: auto 1fr;
   gap: 33px;
+
+  height: 100%;
+  min-height: 0;
 }
 
 .pickers {
@@ -80,10 +81,5 @@ onMounted(() => {
     line-height: var(--size-line-height-small);
     color: var(--color-picker-subtitle);
   }
-}
-
-.table-section {
-  flex: 1;
-  overflow: hidden;
 }
 </style>
