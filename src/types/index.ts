@@ -42,3 +42,8 @@ export interface Reservation {
   seating_time: string
   status: string
 }
+
+export enum TIMESTEP {
+  FULL = 30,
+  HALF = 15
+}

@@ -1,6 +1,6 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
-import type { Booking, Restaurant, Table } from '@/types'
+import { type Booking, type Restaurant, type Table, TIMESTEP } from '@/types'
 import { bookingApi } from '@/api/booking.ts'
 import {
   addMinutesToDate,
@@ -16,8 +16,6 @@ export const useBookingStore = defineStore('booking', () => {
   const tables = ref<Table[]>([])
 
   const selectedDate = ref('')
-
-  const STEP = 30
 
   const visibleTimeCells = computed(() => {
     if (!restaurant.value.opening_time || !restaurant.value.closing_time) {
@@ -35,12 +33,12 @@ export const useBookingStore = defineStore('booking', () => {
       end.setDate(end.getDate() + 1)
     }
 
-    roundUpToStep(end, STEP)
+    roundUpToStep(end, TIMESTEP.FULL)
 
     while (start <= end) {
       result.push(formatDateToString(start))
 
-      addMinutesToDate(start, STEP)
+      addMinutesToDate(start, TIMESTEP.FULL)
     }
 
     return result

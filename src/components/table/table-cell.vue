@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { Table } from '@/types'
+import { type Table, TIMESTEP } from '@/types'
 import { addMinutesToDate, formatDateToString, parseStringToDate } from '@/composables'
 
 const props = defineProps<{
@@ -13,8 +13,8 @@ const addMinutes = (timeStr: string, minsToAdd: number): string =>
   formatDateToString(addMinutesToDate(parseStringToDate(timeStr), minsToAdd))
 
 const subSlots = computed(() => [
-  { start: props.time, end: addMinutes(props.time, 15) },
-  { start: addMinutes(props.time, 15), end: addMinutes(props.time, 30) },
+  { start: props.time, end: addMinutes(props.time, TIMESTEP.HALF) },
+  { start: addMinutes(props.time, TIMESTEP.HALF), end: addMinutes(props.time, TIMESTEP.FULL) },
 ])
 
 const emit = defineEmits<{

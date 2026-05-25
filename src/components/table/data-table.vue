@@ -3,7 +3,8 @@ import type { Table } from '@/types'
 import HeaderCell from '@/components/table/header-cell.vue'
 import TableCell from '@/components/table/table-cell.vue'
 import { computed, onMounted, onUnmounted, ref } from 'vue'
-import { getMaxTimeStr, getMinTimeStr, getTimeDuration } from '@/composables'
+import { getMaxTimeStr, getMinTimeStr, getTimeDuration, useTableCoords } from '@/composables'
+import CurrentTime from '@/components/table/current-time.vue'
 
 const props = defineProps<{
   timeCells: string[]
@@ -135,6 +136,8 @@ const clearSelection = () => {
   pointB.value = null
 }
 
+const { currentTimeY } = useTableCoords(tableWrapperRef)
+
 onMounted(() => window.addEventListener('mouseup', endDragging))
 onUnmounted(() => window.removeEventListener('mouseup', endDragging))
 </script>
@@ -170,6 +173,7 @@ onUnmounted(() => window.removeEventListener('mouseup', endDragging))
         </tr>
       </tbody>
     </table>
+    <current-time v-if="currentTimeY" :y="currentTimeY.y" :width="currentTimeY.width" />
     <div v-if="selectionArea" class="table-wrapper__selection-overlay" :style="overlayStyle">
       <!--      TODO: убрать после создания формы-->
       <div class="overlay-body">
