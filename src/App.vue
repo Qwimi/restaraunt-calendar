@@ -5,11 +5,20 @@ import AppHeader from '@/components/app-header.vue'
 import { storeToRefs } from 'pinia'
 import DatePicker from '@/components/date-picker.vue'
 import ZonePicker from '@/components/zone-picker.vue'
+import DataTable from '@/components/table/data-table.vue'
 
 const bookingStore = useBookingStore()
 
-const { restaurant, available_days, current_day, zones, selectedZones, selectedDate } =
-  storeToRefs(bookingStore)
+const {
+  restaurant,
+  available_days,
+  current_day,
+  zones,
+  selectedZones,
+  selectedDate,
+  visibleTimeCells,
+  visibleTableCells,
+} = storeToRefs(bookingStore)
 
 onMounted(() => {
   bookingStore.getBookingData()
@@ -34,12 +43,19 @@ onMounted(() => {
         <zone-picker :zones="zones" v-model="selectedZones" />
       </div>
     </section>
+
+    <section class="table-section">
+      <data-table :time-cells="visibleTimeCells" :visible-table-cells="visibleTableCells" />
+    </section>
   </div>
 </template>
 
 <style lang="scss" scoped>
 .main {
   padding-block: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 33px;
 }
 
 .pickers {
@@ -49,7 +65,7 @@ onMounted(() => {
 
   &__title {
     font-size: var(--size-font-large);
-    line-height: var(--size-line-height-large);
+    line-height: var(--size-line-height-extralarge);
     font-weight: 700;
   }
 
@@ -64,5 +80,10 @@ onMounted(() => {
     line-height: var(--size-line-height-small);
     color: var(--color-picker-subtitle);
   }
+}
+
+.table-section {
+  flex: 1;
+  overflow: hidden;
 }
 </style>

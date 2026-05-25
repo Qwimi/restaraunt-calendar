@@ -14,14 +14,27 @@
 
   --color-date-picker-bg: rgb(255 255 255 / 4%);
 
+  --color-table-border: rgb(255 255 255 / 16%);
+  --color-table-time-text: rgb(255 255 255 / 48%);
+  --color-table-header-text: rgb(255 255 255 / 64%);
+  --color-table-cell-hover-bg: rgb(255 255 255 / 20%);
+
+  --color-table-overlay-border: rgb(255 255 255 / 64%);
+  --color-table-overlay-bg: rgb(255 255 255 / 30%);
+
   --size-font-small: 11px;
+  --size-font-medium: 13px;
   --size-font-large: 20px;
 
   --size-line-height-small: 14px;
   --size-line-height-medium: 16px;
-  --size-line-height-large: 28px;
+  --size-line-height-large: 20px;
+  --size-line-height-extralarge: 28px;
 
   --size-icon: 16px;
+
+  --size-cell-height: 40px;
+  --size-cell-width: 80px;
 }
 
 html,
@@ -29,6 +42,19 @@ body {
   background-color: var(--color-page-bg);
   color: var(--color-text-primary);
   font-family: Inter, sans-serif;
+}
+
+#app {
+  height: 100vh;
+  width: 100vw;
+
+  max-height: 100vh;
+  max-width: 100vw;
+
+  display: grid;
+  grid-template-rows: auto 1fr;
+
+  overflow: hidden;
 }
 
 .container {
