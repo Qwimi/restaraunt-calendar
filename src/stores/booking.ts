@@ -1,10 +1,20 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
-import { type Booking, type Restaurant, type Table, TIMESTEP } from '@/types'
+import {
+  type Booking,
+  type Restaurant,
+  type Table,
+  type TableEvent,
+  type TableOrder,
+  type TableReservation,
+  TIMESTEP,
+} from '@/types'
 import { bookingApi } from '@/api/booking.ts'
 import {
   addMinutesToDate,
+  formatByTimezone,
   formatDateToString,
+  getMinutesFromStartOfDay,
   parseStringToDate,
   roundUpToStep,
 } from '@/composables'
@@ -23,7 +33,6 @@ export const useBookingStore = defineStore('booking', () => {
     }
 
     const result: string[] = []
-
 
     const start = parseStringToDate(restaurant.value.opening_time)
 
@@ -48,25 +57,53 @@ export const useBookingStore = defineStore('booking', () => {
   const selectedZones = ref<Table['zone'][]>([])
 
   const visibleData = computed(() =>
-    tables.value
-      .filter((table) => selectedZones.value.includes(table.zone))
+    tables.value.filter((table) => selectedZones.value.includes(table.zone)),
   )
 
   const visibleTableCells = computed(() =>
     visibleData.value.map(({ id, capacity, number, zone }) => ({ id, capacity, number, zone })),
   )
 
-  const visibleOrders = computed(() =>
-    visibleData.value.flatMap(({ orders }) =>
-      orders.filter((order) => order.start_time.startsWith(selectedDate.value)),
-    )
-  )
-
-  const visibleReservation = computed(() =>
-    visibleData.value.flatMap(({ reservations }) =>
-      reservations.filter((reservation) => reservation.seating_time.startsWith(selectedDate.value)),
+  const visibleOrders = computed<TableOrder[]>(() =>
+    visibleData.value.flatMap(({ orders, id }) =>
+      orders
+        .filter((order) => order.start_time.startsWith(selectedDate.value))
+        .map((order) => ({
+          ...order,
+          tableId: id,
+          start_time: formatByTimezone(order.start_time, restaurant.value.timezone),
+          end_time: formatByTimezone(order.end_time, restaurant.value.timezone),
+        })),
     ),
   )
+
+  const visibleReservation = computed<TableReservation[]>(() =>
+    visibleData.value.flatMap(({ reservations, id }) =>
+      reservations
+        .filter((reservation) => reservation.seating_time.startsWith(selectedDate.value))
+        .map((reservation) => ({ ...reservation, tableId: id,
+          start_time: formatByTimezone(reservation.seating_time, restaurant.value.timezone),
+          end_time: formatByTimezone(reservation.end_time, restaurant.value.timezone), })),
+    ),
+  )
+
+  const visibleEvents = computed<TableEvent[]>(() => {
+    const combined = [...visibleOrders.value, ...visibleReservation.value]
+
+    return combined.sort((a, b) => {
+      const startA = getMinutesFromStartOfDay(a.start_time)
+      const startB = getMinutesFromStartOfDay(b.start_time)
+
+      if (startA !== startB) {
+        return startA - startB
+      }
+
+      const durationA = getMinutesFromStartOfDay(a.end_time) - startA
+      const durationB = getMinutesFromStartOfDay(b.end_time) - startB
+
+      return durationB - durationA
+    })
+  })
 
   const currentTime = ref<string>()
   let timeIntervalId: ReturnType<typeof setInterval> | null = null
@@ -74,11 +111,10 @@ export const useBookingStore = defineStore('booking', () => {
   const updateCurrentTime = () => {
     if (!current_day.value || !restaurant.value?.timezone) return
 
-    currentTime.value = new Date(
+    currentTime.value = formatByTimezone(
       `${current_day.value}T${new Date().toTimeString().split(' ')[0]}`,
-    ).toLocaleString('ru-RU', {
-      timeZone: restaurant.value.timezone,
-    })
+      restaurant.value.timezone,
+    )
   }
 
   const stopTimeUpdates = () => {
@@ -123,5 +159,6 @@ export const useBookingStore = defineStore('booking', () => {
     visibleReservation,
     visibleTableCells,
     visibleTimeCells,
+    visibleEvents,
   }
 })

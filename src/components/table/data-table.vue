@@ -1,14 +1,23 @@
 <script setup lang="ts">
-import type { Table } from '@/types'
+import type { Table, TableEvent } from '@/types'
 import HeaderCell from '@/components/table/header-cell.vue'
 import TableCell from '@/components/table/table-cell.vue'
-import { computed, onMounted, onUnmounted, ref } from 'vue'
-import { getMaxTimeStr, getMinTimeStr, getTimeDuration, useTableCoords } from '@/composables'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import {
+  getMaxTimeStr,
+  getMinTimeStr,
+  getFormatedTimeDuration,
+  useTableCoords,
+  getMinutesFromStartOfDay,
+} from '@/composables'
 import CurrentTime from '@/components/table/current-time.vue'
+import EventItem from '@/components/table/event-item.vue'
+import { useVirtualizer } from '@tanstack/vue-virtual'
 
 const props = defineProps<{
   timeCells: string[]
   visibleTableCells: Omit<Table, 'orders' | 'reservations'>[]
+  events: TableEvent[]
 }>()
 
 interface SelectionPoint {
@@ -29,7 +38,7 @@ const selectionArea = computed(() => {
 
   const startTime = getMinTimeStr([pointA.value.startTime, pointB.value.startTime])
   const endTime = getMaxTimeStr([pointA.value.endTime, pointB.value?.endTime])
-  const duration = getTimeDuration(startTime, endTime)
+  const duration = getFormatedTimeDuration(startTime, endTime)
 
   const aIndex = props.visibleTableCells.findIndex((table) => table.id === pointA.value?.table)
   const bIndexRaw = pointB.value
@@ -48,7 +57,7 @@ const selectionArea = computed(() => {
     endTime,
     duration,
     tablesNumbers: tablesData.map((table) => table.number),
-    tablesCapacity: tablesData.reduce((acc, table) => (acc += table.capacity), 0),
+    tablesCapacity: tablesData.reduce((acc, table) => (acc + table.capacity), 0),
     tableIds,
     startTable: tableIds[0],
     endTable: tableIds.at(-1),
@@ -97,36 +106,55 @@ const endDragging = () => {
 }
 
 const tableWrapperRef = ref<HTMLDivElement | null>(null)
+const { currentTimeY, getPositionStyle } = useTableCoords(tableWrapperRef)
+
+// Виртуализация строк
+const rowVirtualizerOptions = computed(() => {
+  return {
+    count: props.timeCells.length,
+    getScrollElement: () => tableWrapperRef.value,
+    estimateSize: () => 40,
+    overscan: 3,
+  }
+})
+
+const rowVirtualizer = useVirtualizer(rowVirtualizerOptions)
+
+const virtualRows = computed(() => rowVirtualizer.value.getVirtualItems())
+
+// Виртуализация колонок
+const colVirtualizerOptions = computed(() => {
+  return {
+    count: props.visibleTableCells.length,
+    horizontal: true,
+    getScrollElement: () => tableWrapperRef.value,
+    estimateSize: () => 80,
+    overscan: 5,
+  }
+})
+
+const colVirtualizer = useVirtualizer(colVirtualizerOptions)
+
+const virtualCols = computed(() => colVirtualizer.value.getVirtualItems())
+
+const paddingLeft = computed(() => virtualCols.value[0]?.start ?? 0)
+const paddingRight = computed(() => {
+  if (!virtualCols.value.length) return 0
+  return colVirtualizer.value.getTotalSize() - virtualCols.value[virtualCols.value.length - 1]!.end
+})
+
 const overlayStyle = computed(() => {
-  if (!selectionArea.value || !tableWrapperRef.value) {
+  if (!selectionArea.value) {
     return { display: 'none' }
   }
 
-  const wrapperRect = tableWrapperRef.value.getBoundingClientRect()
-
-  const startEl = tableWrapperRef.value.querySelector(
-    `[data-table-id="${selectionArea.value.startTable}"][data-time-start="${selectionArea.value.startTime}"]`,
-  )
-  const endEl = tableWrapperRef.value.querySelector(
-    `[data-table-id="${selectionArea.value.endTable}"][data-time-end="${selectionArea.value.endTime}"]`,
-  )
-
-  if (!startEl || !endEl) return { display: 'none' }
-
-  const rectStart = startEl.getBoundingClientRect()
-  const rectEnd = endEl.getBoundingClientRect()
-
-  const top = rectStart.top - wrapperRect.top + tableWrapperRef.value.scrollTop
-  const left = rectStart.left - wrapperRect.left + tableWrapperRef.value.scrollLeft
-  const bottom = rectEnd.bottom - wrapperRect.top + tableWrapperRef.value.scrollTop
-  const right = rectEnd.right - wrapperRect.left + tableWrapperRef.value.scrollLeft
-
   return {
-    position: 'absolute',
-    top: `${top}px`,
-    left: `${left}px`,
-    width: `${right - left}px`,
-    height: `${bottom - top}px`,
+    ...getPositionStyle(
+      selectionArea.value.startTime,
+      selectionArea.value.endTime,
+      selectionArea.value.startTable!,
+      selectionArea.value.endTable!,
+    ),
     pointerEvents: isDragging.value ? 'none' : 'auto',
   }
 })
@@ -136,10 +164,45 @@ const clearSelection = () => {
   pointB.value = null
 }
 
-const { currentTimeY } = useTableCoords(tableWrapperRef)
-
 onMounted(() => window.addEventListener('mouseup', endDragging))
 onUnmounted(() => window.removeEventListener('mouseup', endDragging))
+
+const visibleTableIds = computed(() => {
+  return new Set(virtualCols.value.map((col) => props.visibleTableCells[col.index]!.id))
+})
+
+const visibleTimeRange = computed(() => {
+  if (!virtualRows.value.length) return null
+
+  const first = virtualRows.value[0]
+  const last = virtualRows.value.at(-1)
+
+  return {
+    start: getMinutesFromStartOfDay(props.timeCells[first!.index]!),
+    end: getMinutesFromStartOfDay(props.timeCells[last!.index]!),
+  }
+})
+
+const visibleEvents = computed(() => {
+  if (!visibleTimeRange.value) return []
+
+  const { start, end } = visibleTimeRange.value
+
+  return props.events.filter((event) => {
+    const tableVisible = visibleTableIds.value.has(event.tableId)
+
+    const timeVisible =
+      getMinutesFromStartOfDay(event.end_time) > start ||
+      getMinutesFromStartOfDay(event.start_time) < end
+
+    return tableVisible && timeVisible
+  })
+})
+
+watch(visibleEvents, () => {
+  console.log(props.events)
+  console.log(visibleEvents.value)
+})
 </script>
 
 <template>
@@ -147,29 +210,59 @@ onUnmounted(() => window.removeEventListener('mouseup', endDragging))
     <table class="table" v-show="props.visibleTableCells.length">
       <thead>
         <tr>
-          <th></th>
+          <th class="table__time-header-cell"></th>
+
+          <th
+            v-if="paddingLeft > 0"
+            :style="{ width: `${paddingLeft}px` }"
+            style="padding: 0; border: none"
+          ></th>
+
           <header-cell
-            v-for="table in props.visibleTableCells"
-            :key="table.id"
-            :cell-data="table"
+            v-for="virtualCol in virtualCols"
+            :key="virtualCol.index"
+            :cell-data="props.visibleTableCells[virtualCol.index]!"
+            :style="{ width: `${virtualCol.size}px` }"
           />
+
+          <th
+            v-if="paddingRight > 0"
+            :style="{ width: `${paddingRight}px` }"
+            style="padding: 0; border: none"
+          ></th>
         </tr>
       </thead>
       <tbody>
+
         <tr v-for="time in props.timeCells" :key="time">
-          <td class="table__time-cell">{{ time }}</td>
+          <td class="table__time-cell">
+            {{ time }}
+          </td>
+
+          <td
+            v-if="paddingLeft > 0"
+            :style="{ width: `${paddingLeft}px` }"
+            style="padding: 0; border: none"
+          ></td>
 
           <table-cell
-            v-for="table in props.visibleTableCells"
-            :key="table.id"
+            v-for="virtualCol in virtualCols"
+            :key="virtualCol.index"
             :time="time"
-            :table-id="table.id"
-            :zone="table.zone"
+            :table-id="props.visibleTableCells[virtualCol.index]!.id"
+            :zone="props.visibleTableCells[virtualCol.index]!.zone"
             class="table__cell"
+            :style="{ width: `${virtualCol.size}px` }"
             @start-select="startDragging"
             @select="dragging"
             @end-select="endDragging"
           />
+
+          <td
+            v-if="paddingRight > 0"
+            :style="{ width: `${paddingRight}px` }"
+            style="padding: 0; border: none"
+          ></td>
         </tr>
       </tbody>
     </table>
@@ -183,6 +276,13 @@ onUnmounted(() => window.removeEventListener('mouseup', endDragging))
         </pre>
       </div>
     </div>
+    <event-item
+      v-for="event in visibleEvents"
+      :key="event.id"
+      :event="event"
+      :is-dragging="isDragging"
+      :position-style-func="getPositionStyle"
+    />
   </div>
 </template>
 
@@ -191,7 +291,6 @@ $border-style: 1px solid var(--color-table-border);
 
 .table-wrapper {
   overflow: auto;
-  overflow-x: scroll;
   min-width: 0;
   position: relative;
 
@@ -230,7 +329,7 @@ $border-style: 1px solid var(--color-table-border);
     position: sticky;
     top: 0;
     background-color: var(--color-page-bg);
-    z-index: 2;
+    z-index: 101;
   }
 
   font-size: var(--size-font-small);

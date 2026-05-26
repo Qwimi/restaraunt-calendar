@@ -74,6 +74,7 @@ $border-style: 1px solid var(--color-table-border);
     color: var(--color-table-time-text);
     opacity: 0;
     transition: opacity 0.3s;
+    line-height: var(--size-line-height-reset);
 
     &:hover {
       opacity: 1;

@@ -1,15 +1,27 @@
 import { useBookingStore } from '@/stores/booking.ts'
 import { storeToRefs } from 'pinia'
-import { computed, onMounted, onUnmounted, ref, type Ref } from 'vue'
-import { TIMESTEP } from '@/types'
+import { computed, type CSSProperties, onMounted, onUnmounted, ref, type Ref } from 'vue'
+import { type Table, TIMESTEP } from '@/types'
 
-export const parseStringToDate = (str: string) => {
+/**
+ * Конвертирует строку вида "чч:мм" в объект Date.
+ *
+ * @param str - Строка времени (например, "11:00").
+ * @returns Объект даты с указанным временем.
+ */
+export const parseStringToDate = (str: string): Date => {
   const [hours, minutes] = str.split(':').map(Number)
   const date = new Date()
   date.setHours(hours!, minutes, 0, 0)
   return date
 }
 
+/**
+ * Конвертирует полную строку даты и времени ("дд.мм.гггг, чч:мм:сс") в объект Date.
+ *
+ * @param str - Строка формата "ДД.ММ.ГГГГ, ЧЧ:ММ:СС"(toLocaleString).
+ * @returns Созданный объект Date.
+ */
 export const parseFullDateTimeString = (str: string): Date => {
   const [datePart, timePart] = str.split(', ')
 
@@ -20,19 +32,55 @@ export const parseFullDateTimeString = (str: string): Date => {
   return new Date(year!, month! - 1, day, hours, minutes, seconds)
 }
 
-
+/**
+ * Форматирует объект Date в строку времени формата "чч:мм".
+ *
+ * @param date - Объект даты для форматирования.
+ * @returns Строка времени (например, "15:30").
+ */
 export const formatDateToString = (date: Date): string => {
   const hours = String(date.getHours()).padStart(2, '0')
   const minutes = String(date.getMinutes()).padStart(2, '0')
   return `${hours}:${minutes}`
 }
 
+/**
+ * Конвертирует строку даты в формат "дд.мм.гггг, чч:мм:сс" с учетом указанного часового пояса.
+ *
+ * @param dateString - Исходная строка даты.
+ * @param timeZone - Целевой часовой пояс (например, "Europe/Moscow").
+ * @returns Строка времени "чч:мм" или пустая строка, если дата не передана.
+ */
+export const formatByTimezone = (dateString: string, timeZone: string): string => {
+  if (!dateString) return ''
+
+  const localDateTime = new Date(dateString).toLocaleString('ru-RU', {
+    timeZone,
+  })
+
+  return formatDateToString(parseFullDateTimeString(localDateTime))
+}
+
+/**
+ * Мутирует переданную дату, добавляя к ней указанное количество минут.
+ *
+ * @param date - Исходный объект Date (будет изменен).
+ * @param minutes - Количество добавляемых минут.
+ * @returns Измененный объект Date.
+ */
 export const addMinutesToDate = (date: Date, minutes: number): Date => {
   date.setMinutes(date.getMinutes() + minutes)
 
   return date
 }
 
+/**
+ * Округляет минуты переданной даты вверх до ближайшего шага (интервала).
+ *
+ * @param date - Исходный объект Date (будет изменен).
+ * @param step - Шаг округления в минутах (например, 15, 30).
+ * @returns Округленный объект Date.
+ */
 export const roundUpToStep = (date: Date, step: number): Date => {
   const remainder = date.getMinutes() % step
 
@@ -42,6 +90,12 @@ export const roundUpToStep = (date: Date, step: number): Date => {
   return date
 }
 
+/**
+ * Находит минимальное время из массива строк формата "чч:мм".
+ *
+ * @param timeStrings - Массив временных строк.
+ * @returns Минимальное время "чч:мм" или пустая строка, если массив пуст.
+ */
 export const getMinTimeStr = (timeStrings: string[]): string => {
   if (!timeStrings.length) return ''
 
@@ -52,6 +106,12 @@ export const getMinTimeStr = (timeStrings: string[]): string => {
   return formatDateToString(minDate)
 }
 
+/**
+ * Находит максимальное время из массива строк формата "чч:мм".
+ *
+ * @param timeStrings - Массив временных строк.
+ * @returns Максимальное время "чч:мм" или пустая строка, если массив пуст.
+ */
 export const getMaxTimeStr = (timeStrings: string[]): string => {
   if (!timeStrings.length) return ''
 
@@ -62,17 +122,49 @@ export const getMaxTimeStr = (timeStrings: string[]): string => {
   return formatDateToString(maxDate)
 }
 
-export const getTimeDuration = (timeStrA: string, timeStrB: string): string => {
+/**
+ * Вычисляет количество минут, прошедших с начала дня для времени "чч:мм".
+ *
+ * @param timeStr - Строка времени "чч:мм".
+ * @returns Общее количество минут.
+ */
+export const getMinutesFromStartOfDay = (timeStr: string): number => {
+  const [hours, minutes] = timeStr.split(':').map(Number)
+  return hours! * 60 + minutes!
+}
+
+/**
+ * Вычисляет абсолютную разницу в минутах между двумя временными точками.
+ *
+ * @param timeStrA - Первая строка времени "чч:мм".
+ * @param timeStrB - Вторая строка времени "чч:мм".
+ * @returns Разница в минутах или 0, если одна из строк отсутствует.
+ */
+const getTimeDuration = (timeStrA: string, timeStrB: string) => {
+  if (!timeStrA || !timeStrB) return 0
+
+  const minA = getMinutesFromStartOfDay(timeStrA)
+  const minB = getMinutesFromStartOfDay(timeStrB)
+
+  return  Math.abs(minB - minA)
+}
+
+/**
+ * Вычисляет разницу между двумя временными точками и форматирует её в понятную строку.
+ *
+ * Возвращает строку в формате "Хч Хм", "Хч" или "Хм" в зависимости от длительности.
+ *
+ * @param timeStrA - Первая строка времени "чч:мм".
+ * @param timeStrB - Вторая строка времени "чч:мм".
+ * @returns Строка с длительностью (например, "2ч 30м", "45м") или пустая строка при отсутствии данных.
+ */
+export const getFormatedTimeDuration = (timeStrA: string, timeStrB: string): string => {
   if (!timeStrA || !timeStrB) return ''
 
-  const dateA = parseStringToDate(timeStrA)
-  const dateB = parseStringToDate(timeStrB)
+  const duration = getTimeDuration(timeStrA, timeStrB)
 
-  const diffMs = Math.abs(dateB.getTime() - dateA.getTime())
-  const totalMinutes = Math.floor(diffMs / (1000 * 60))
-
-  const hours = Math.floor(totalMinutes / 60)
-  const minutes = totalMinutes % 60
+  const hours = Math.floor(duration / 60)
+  const minutes = duration % 60
 
   if (hours > 0) {
     return minutes > 0 ? `${hours}ч ${minutes}м` : `${hours}ч`
@@ -109,19 +201,28 @@ export const useTableCoords = (tableWrapperRef: Ref<HTMLDivElement | null>) => {
     if (resizeObserver) resizeObserver.disconnect()
   })
 
-  const currentTimeY = computed(() => {
-    if (
-      selectedDate.value !== current_day.value ||
-      !tableWrapperRef.value ||
-      !currentTime.value
-    ) {
-      return null
-    }
+  // Находим вертикальнуюю координату точки во времени
+  const findVerticalCoords = (time: string, step: number = TIMESTEP.HALF) => {
+    if (!tableWrapperRef.value) return null
+
     const tableRect = tableWrapperRef.value.getBoundingClientRect()
 
-    const now = parseFullDateTimeString(currentTime.value)
-    const roundedUpDate = roundUpToStep(new Date(now.getTime()), TIMESTEP.HALF)
-    const targetTimeEndStr = formatDateToString(roundedUpDate)
+    if (getMinutesFromStartOfDay(time) % step === 0) {
+      const targetCellEl = tableWrapperRef.value.querySelector(
+        `[data-time-start="${time}"]`,
+      ) as HTMLElement
+
+      if (!targetCellEl) return null
+
+      const cellRect = targetCellEl.getBoundingClientRect()
+      return (
+        cellRect.top -
+        tableRect.top +
+        tableWrapperRef.value.scrollTop
+      )
+    }
+
+    const targetTimeEndStr =  formatDateToString(roundUpToStep(parseStringToDate(time), step))
 
     const targetCellEl = tableWrapperRef.value.querySelector(
       `[data-time-end="${targetTimeEndStr}"]`,
@@ -131,17 +232,69 @@ export const useTableCoords = (tableWrapperRef: Ref<HTMLDivElement | null>) => {
 
     const cellRect = targetCellEl.getBoundingClientRect()
 
-    const minutesToSlotEnd = Math.floor((roundedUpDate.getTime() - now.getTime() )/ (1000 * 60))
+    const minutesToSlotEnd = getTimeDuration(time, targetTimeEndStr)
 
-    const pixelOffsetFromCellBottom = (minutesToSlotEnd / TIMESTEP.HALF) * cellRect.height
+    const pixelOffsetFromCellBottom = (minutesToSlotEnd / step) * cellRect.height
 
-    const cellBottomRelative = cellRect.bottom - pixelOffsetFromCellBottom - tableRect.top + tableWrapperRef.value.scrollTop
+    return cellRect.bottom - pixelOffsetFromCellBottom - tableRect.top + tableWrapperRef.value.scrollTop
+  }
+
+  const currentTimeY = computed(() => {
+    if (
+      selectedDate.value !== current_day.value ||
+      !currentTime.value ||
+      !tableWidth.value
+    ) {
+      return null
+    }
+
+    const y = findVerticalCoords(currentTime.value)
+
+    if (y === null) return null
 
     return {
-      y: cellBottomRelative,
+      y,
       width: tableWidth.value,
     }
   })
 
-  return { currentTimeY }
+  const getPositionStyle = (
+    startTime: string,
+    endTime: string,
+    tableStart: Table['id'],
+    tableEnd: Table['id'],
+  ): CSSProperties => {
+    if (!tableWrapperRef.value) {
+      return { display: 'none' }
+    }
+
+    const wrapperRect = tableWrapperRef.value.getBoundingClientRect()
+
+    const startEl = tableWrapperRef.value.querySelector(
+      `[data-table-id="${tableStart}"]`,
+    )
+    const endEl = tableWrapperRef.value.querySelector(
+      `[data-table-id="${tableEnd}"]`,
+    )
+
+    if (!startEl || !endEl) return { display: 'none' }
+
+    const rectStart = startEl.getBoundingClientRect()
+    const rectEnd = endEl.getBoundingClientRect()
+
+    const top = findVerticalCoords(startTime) ?? 0
+    const left = rectStart.left - wrapperRect.left + tableWrapperRef.value.scrollLeft
+    const bottom = findVerticalCoords(endTime) ?? 0
+    const right = rectEnd.right - wrapperRect.left + tableWrapperRef.value.scrollLeft
+
+    return {
+      position: 'absolute',
+      top: `${top}px`,
+      left: `${left}px`,
+      width: `${right - left}px`,
+      height: `${bottom - top}px`,
+    }
+  }
+
+  return { currentTimeY, getPositionStyle }
 }

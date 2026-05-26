@@ -17,6 +17,7 @@
     "lint:style:fix": "stylelint \"**/*.{vue,scss}\" --fix"
   },
   "dependencies": {
+    "@tanstack/vue-virtual": "^3.13.26",
     "axios": "^1.16.1",
     "pinia": "^3.0.4",
     "vue": "beta"

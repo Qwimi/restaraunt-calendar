@@ -18,6 +18,7 @@ const {
   selectedDate,
   visibleTimeCells,
   visibleTableCells,
+  visibleEvents,
 } = storeToRefs(bookingStore)
 
 onMounted(() => {
@@ -44,7 +45,11 @@ onMounted(() => {
       </div>
     </section>
 
-    <data-table :time-cells="visibleTimeCells" :visible-table-cells="visibleTableCells" />
+    <data-table
+      :time-cells="visibleTimeCells"
+      :visible-table-cells="visibleTableCells"
+      :events="visibleEvents"
+    />
   </div>
 </template>
 

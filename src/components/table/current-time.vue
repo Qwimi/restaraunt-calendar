@@ -16,5 +16,7 @@ const props = defineProps<{ y: number; width: number }>()
   left: 0;
   right: 0;
   width: var(--w);
+
+  z-index: 100;
 }
 </style>
