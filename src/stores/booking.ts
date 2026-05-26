@@ -2,19 +2,18 @@ import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 import {
   type Booking,
+  type PositionedEvent,
   type Restaurant,
   type Table,
   type TableEvent,
-  type TableOrder,
-  type TableReservation,
   TIMESTEP,
 } from '@/types'
 import { bookingApi } from '@/api/booking.ts'
 import {
   addMinutesToDate,
+  calculateEventPositions,
   formatByTimezone,
   formatDateToString,
-  getMinutesFromStartOfDay,
   parseStringToDate,
   roundUpToStep,
 } from '@/composables'
@@ -64,7 +63,7 @@ export const useBookingStore = defineStore('booking', () => {
     visibleData.value.map(({ id, capacity, number, zone }) => ({ id, capacity, number, zone })),
   )
 
-  const visibleOrders = computed<TableOrder[]>(() =>
+  const visibleOrders = computed<TableEvent[]>(() =>
     visibleData.value.flatMap(({ orders, id }) =>
       orders
         .filter((order) => order.start_time.startsWith(selectedDate.value))
@@ -73,37 +72,27 @@ export const useBookingStore = defineStore('booking', () => {
           tableId: id,
           start_time: formatByTimezone(order.start_time, restaurant.value.timezone),
           end_time: formatByTimezone(order.end_time, restaurant.value.timezone),
+          type: order.status === 'Banquet' ? 'banquet' : 'order',
         })),
     ),
   )
 
-  const visibleReservation = computed<TableReservation[]>(() =>
+  const visibleReservation = computed<TableEvent[]>(() =>
     visibleData.value.flatMap(({ reservations, id }) =>
       reservations
         .filter((reservation) => reservation.seating_time.startsWith(selectedDate.value))
-        .map((reservation) => ({ ...reservation, tableId: id,
+        .map((reservation) => ({
+          ...reservation,
+          tableId: id,
           start_time: formatByTimezone(reservation.seating_time, restaurant.value.timezone),
-          end_time: formatByTimezone(reservation.end_time, restaurant.value.timezone), })),
+          end_time: formatByTimezone(reservation.end_time, restaurant.value.timezone),
+          type: reservation.status === 'Живая очередь' ? 'waiting-guests' : 'reservation',
+        })),
     ),
   )
-
-  const visibleEvents = computed<TableEvent[]>(() => {
-    const combined = [...visibleOrders.value, ...visibleReservation.value]
-
-    return combined.sort((a, b) => {
-      const startA = getMinutesFromStartOfDay(a.start_time)
-      const startB = getMinutesFromStartOfDay(b.start_time)
-
-      if (startA !== startB) {
-        return startA - startB
-      }
-
-      const durationA = getMinutesFromStartOfDay(a.end_time) - startA
-      const durationB = getMinutesFromStartOfDay(b.end_time) - startB
-
-      return durationB - durationA
-    })
-  })
+  const visibleEvents = computed<PositionedEvent[]>(() =>
+    calculateEventPositions([...visibleOrders.value, ...visibleReservation.value]),
+  )
 
   const currentTime = ref<string>()
   let timeIntervalId: ReturnType<typeof setInterval> | null = null

@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import type { Table, TableEvent } from '@/types'
+import type { PositionedEvent, Table } from '@/types'
 import HeaderCell from '@/components/table/header-cell.vue'
 import TableCell from '@/components/table/table-cell.vue'
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import {
   getMaxTimeStr,
   getMinTimeStr,
@@ -17,7 +17,7 @@ import { useVirtualizer } from '@tanstack/vue-virtual'
 const props = defineProps<{
   timeCells: string[]
   visibleTableCells: Omit<Table, 'orders' | 'reservations'>[]
-  events: TableEvent[]
+  events: PositionedEvent[]
 }>()
 
 interface SelectionPoint {
@@ -57,7 +57,7 @@ const selectionArea = computed(() => {
     endTime,
     duration,
     tablesNumbers: tablesData.map((table) => table.number),
-    tablesCapacity: tablesData.reduce((acc, table) => (acc + table.capacity), 0),
+    tablesCapacity: tablesData.reduce((acc, table) => acc + table.capacity, 0),
     tableIds,
     startTable: tableIds[0],
     endTable: tableIds.at(-1),
@@ -198,11 +198,6 @@ const visibleEvents = computed(() => {
     return tableVisible && timeVisible
   })
 })
-
-watch(visibleEvents, () => {
-  console.log(props.events)
-  console.log(visibleEvents.value)
-})
 </script>
 
 <template>
@@ -233,7 +228,6 @@ watch(visibleEvents, () => {
         </tr>
       </thead>
       <tbody>
-
         <tr v-for="time in props.timeCells" :key="time">
           <td class="table__time-cell">
             {{ time }}

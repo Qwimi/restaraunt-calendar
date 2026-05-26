@@ -1,7 +1,7 @@
 import { useBookingStore } from '@/stores/booking.ts'
 import { storeToRefs } from 'pinia'
 import { computed, type CSSProperties, onMounted, onUnmounted, ref, type Ref } from 'vue'
-import { type Table, TIMESTEP } from '@/types'
+import { type PositionedEvent, type Table, type TableEvent, TIMESTEP } from '@/types'
 
 /**
  * Конвертирует строку вида "чч:мм" в объект Date.
@@ -146,7 +146,7 @@ const getTimeDuration = (timeStrA: string, timeStrB: string) => {
   const minA = getMinutesFromStartOfDay(timeStrA)
   const minB = getMinutesFromStartOfDay(timeStrB)
 
-  return  Math.abs(minB - minA)
+  return Math.abs(minB - minA)
 }
 
 /**
@@ -172,7 +172,6 @@ export const getFormatedTimeDuration = (timeStrA: string, timeStrB: string): str
 
   return `${minutes}м`
 }
-
 
 export const useTableCoords = (tableWrapperRef: Ref<HTMLDivElement | null>) => {
   const bookingStore = useBookingStore()
@@ -215,14 +214,10 @@ export const useTableCoords = (tableWrapperRef: Ref<HTMLDivElement | null>) => {
       if (!targetCellEl) return null
 
       const cellRect = targetCellEl.getBoundingClientRect()
-      return (
-        cellRect.top -
-        tableRect.top +
-        tableWrapperRef.value.scrollTop
-      )
+      return cellRect.top - tableRect.top + tableWrapperRef.value.scrollTop
     }
 
-    const targetTimeEndStr =  formatDateToString(roundUpToStep(parseStringToDate(time), step))
+    const targetTimeEndStr = formatDateToString(roundUpToStep(parseStringToDate(time), step))
 
     const targetCellEl = tableWrapperRef.value.querySelector(
       `[data-time-end="${targetTimeEndStr}"]`,
@@ -236,15 +231,13 @@ export const useTableCoords = (tableWrapperRef: Ref<HTMLDivElement | null>) => {
 
     const pixelOffsetFromCellBottom = (minutesToSlotEnd / step) * cellRect.height
 
-    return cellRect.bottom - pixelOffsetFromCellBottom - tableRect.top + tableWrapperRef.value.scrollTop
+    return (
+      cellRect.bottom - pixelOffsetFromCellBottom - tableRect.top + tableWrapperRef.value.scrollTop
+    )
   }
 
   const currentTimeY = computed(() => {
-    if (
-      selectedDate.value !== current_day.value ||
-      !currentTime.value ||
-      !tableWidth.value
-    ) {
+    if (selectedDate.value !== current_day.value || !currentTime.value || !tableWidth.value) {
       return null
     }
 
@@ -270,12 +263,8 @@ export const useTableCoords = (tableWrapperRef: Ref<HTMLDivElement | null>) => {
 
     const wrapperRect = tableWrapperRef.value.getBoundingClientRect()
 
-    const startEl = tableWrapperRef.value.querySelector(
-      `[data-table-id="${tableStart}"]`,
-    )
-    const endEl = tableWrapperRef.value.querySelector(
-      `[data-table-id="${tableEnd}"]`,
-    )
+    const startEl = tableWrapperRef.value.querySelector(`[data-table-id="${tableStart}"]`)
+    const endEl = tableWrapperRef.value.querySelector(`[data-table-id="${tableEnd}"]`)
 
     if (!startEl || !endEl) return { display: 'none' }
 
@@ -298,3 +287,107 @@ export const useTableCoords = (tableWrapperRef: Ref<HTMLDivElement | null>) => {
 
   return { currentTimeY, getPositionStyle }
 }
+
+const calculateGroupEventsPositions = (events: TableEvent[]): PositionedEvent[] => {
+  // Сортируем по дате начала
+  const sortedEvents = events.sort((a, b) => {
+    const startA = getMinutesFromStartOfDay(a.start_time)
+    const startB = getMinutesFromStartOfDay(b.start_time)
+
+    if (startA !== startB) {
+      return startA - startB
+    }
+
+    // Если даты начала одинаковые - сравниваем по длине события
+    const durationA = getMinutesFromStartOfDay(a.end_time) - startA
+    const durationB = getMinutesFromStartOfDay(b.end_time) - startB
+
+    return durationB - durationA
+  })
+
+  // Пересечения, где время начал событий находятся в промежутке +-30 минут
+  const eventColumnGroups: TableEvent[][] = []
+
+  for (const event of sortedEvents) {
+    const currentStart = getMinutesFromStartOfDay(event.start_time)
+
+    const lastGroup = eventColumnGroups.at(-1)
+
+    if (!lastGroup) {
+      eventColumnGroups.push([event])
+      continue
+    }
+
+    // Проверяем есть ли пересечение с последним элементом последней группы
+    const lastGroupStart = getMinutesFromStartOfDay(lastGroup.at(-1)!.start_time)
+
+    const diff = Math.abs(currentStart - lastGroupStart)
+
+    if (diff < TIMESTEP.FULL) {
+      lastGroup.push(event)
+    } else {
+      eventColumnGroups.push([event])
+    }
+  }
+
+  // Колонки с пересечениями
+  const eventColumnGroupsOverlap: PositionedEvent[][] = []
+
+  for (const column of eventColumnGroups) {
+    const firstEvent = column[0]!
+
+    const firstEnd = getMinutesFromStartOfDay(firstEvent.end_time)
+
+    let level = 0
+
+    // Проходимся по уже отсортированным группам колонок, проверяем есть ли пресечения с ними
+    for (const prevGroup of eventColumnGroupsOverlap) {
+      const prevEvent = prevGroup[0]!
+
+      const prevStart = getMinutesFromStartOfDay(prevEvent.start_time)
+
+      const isOverlap = firstEnd > prevStart
+
+      // Если нашли пересечение проставляем уровень(смещение)
+      if (isOverlap) {
+        level = Math.max(level, prevEvent.level + 1)
+      }
+    }
+
+    const columnsCount = column.length
+
+    // Проставляем для каждой группы колонок общее кол-во колонок, индекс текущей колонки и смещение
+    const positionedColumnGroup = column.map((event, column) => ({
+      ...event,
+      column,
+      columnsCount,
+      level,
+    }))
+
+    eventColumnGroupsOverlap.push(positionedColumnGroup)
+  }
+
+  return eventColumnGroupsOverlap.flat()
+}
+
+export const calculateEventPositions = (events: TableEvent[]): PositionedEvent[] => {
+  const tableMap = new Map<string, TableEvent[]>()
+
+  // Группируем события по столам
+  for (const event of events) {
+    const tableEvents = tableMap.get(event.tableId) ?? []
+
+    tableEvents.push(event)
+
+    tableMap.set(event.tableId, tableEvents)
+  }
+
+  const result: PositionedEvent[] = []
+
+  for (const tableEvents of tableMap.values()) {
+    result.push(...calculateGroupEventsPositions(tableEvents))
+  }
+
+  return result
+}
+

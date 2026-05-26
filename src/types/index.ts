@@ -29,10 +29,6 @@ export interface Order {
   status: string
 }
 
-export type TableOrder = Order & {
-  tableId: Table['id']
-}
-
 export interface OrderCreateRequest extends Omit<Order, 'id'> {
   table_id: Table['id']
 }
@@ -47,13 +43,18 @@ export interface Reservation {
   status: string
 }
 
-export type TableReservation = Reservation & {
+export type TableEvent = (Order | Reservation) & {
   tableId: Table['id']
   start_time: string
   end_time: string
+  type: 'order' | 'banquet' | 'waiting-guests' | 'reservation'
 }
 
-export type TableEvent = TableReservation | TableOrder
+export type PositionedEvent = TableEvent & {
+  column: number
+  columnsCount: number
+  level: number
+}
 
 export enum TIMESTEP {
   FULL = 30,
