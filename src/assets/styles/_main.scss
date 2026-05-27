@@ -5,22 +5,25 @@
   --color-text-primary: var(--color-white);
   --color-page-bg: #1b1b1d;
 
-  --color-header-bg: rgb(255 255 255 / 8%);
+  --color-header-bg: color-mix(in srgb, var(--color-text-primary) 8%, transparent);
 
-  --color-chechbox-bg: rgb(255 255 255 / 8%);
+  --color-chechbox-bg: color-mix(in srgb, var(--color-text-primary) 8%, transparent);
   --color-chechbox-bg-active: var(--color-blue);
+  --color-chechbox-text-active: var(--color-white);
 
-  --color-picker-subtitle: rgb(255 255 255 / 64%);
+  --color-picker-subtitle: color-mix(in srgb, var(--color-text-primary) 64%, transparent);
 
-  --color-date-picker-bg: rgb(255 255 255 / 4%);
+  --color-date-picker-bg: color-mix(in srgb, var(--color-text-primary) 4%, transparent);
 
-  --color-table-border: rgb(255 255 255 / 16%);
-  --color-table-time-text: rgb(255 255 255 / 48%);
-  --color-table-header-text: rgb(255 255 255 / 64%);
-  --color-table-cell-hover-bg: rgb(255 255 255 / 20%);
+  --color-table-border: color-mix(in srgb, var(--color-text-primary) 16%, transparent);
+  --color-table-time-text: color-mix(in srgb, var(--color-text-primary) 48%, transparent);
+  --color-table-header-text: color-mix(in srgb, var(--color-text-primary) 64%, transparent);
+  --color-table-cell-hover-bg: color-mix(in srgb, var(--color-text-primary) 20%, transparent);
 
-  --color-table-overlay-border: rgb(255 255 255 / 64%);
-  --color-table-overlay-bg: rgb(255 255 255 / 30%);
+  --color-table-overlay-border: color-mix(in srgb, var(--color-text-primary) 64%, transparent);
+  --color-table-overlay-bg: color-mix(in srgb, var(--color-text-primary) 30%, transparent);
+
+  --color-theme-toggler-bg: color-mix(in srgb, var(--color-text-primary) 8%, transparent);
 
   --color-order-accent: #7FD7CC;
   --color-banquet-accent: #B348F7;
@@ -29,14 +32,14 @@
 
   --color-table-current-time: #FF7043;
 
-  --color-badge-neutral-bg: rgb(255 255 255 / 12%);
+  --color-badge-neutral-bg: color-mix(in srgb, var(--color-text-primary) 12%, transparent);
   --color-badge-neutral-text: var(--color-text-primary);
   --color-badge-success-bg: rgb(74 201 155 / 32%);
   --color-badge-success-text: var(--color-text-primary);
   --color-badge-primary-bg: var(--color-blue);
   --color-badge-primary-text: var(--color-text-primary);
   --color-badge-primary-reserve-text: #0097FD;
-  --color-badge-primary-reserve-bg: color-mix(in srgb,var(--color-badge-primary-reserve-text) 10%, transparent);
+  --color-badge-primary-reserve-bg: color-mix(in srgb, var(--color-badge-primary-reserve-text) 10%, transparent);
 
   --size-font-extrasmall: 8px;
   --size-font-small: 11px;
@@ -55,6 +58,11 @@
 
   --size-cell-height: 40px;
   --size-cell-width: 80px;
+}
+
+[data-theme="light"] {
+  --color-text-primary: #333;
+  --color-page-bg: var(--color-white);
 }
 
 html,

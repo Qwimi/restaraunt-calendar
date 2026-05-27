@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref, watchEffect } from 'vue'
 
-
 const props = withDefaults(
   defineProps<{
     name: 'moon' | 'solar' | 'phone'
@@ -31,7 +30,6 @@ watchEffect(async () => {
 <style scoped lang="scss">
 .icon {
   display: inline-block;
-  color: currentColor;
   width: var(--icon-size);
   height: var(--icon-size);
 
@@ -39,6 +37,7 @@ watchEffect(async () => {
     width: 100%;
     height: 100%;
     display: block;
+    fill: currentColor;
   }
 
   &--xs {

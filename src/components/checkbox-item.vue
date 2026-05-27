@@ -43,6 +43,7 @@ const toggle = () => {
 
   &--active {
     background-color: var(--color-chechbox-bg-active);
+    color: var(--color-chechbox-text-active);
   }
 }
 </style>
