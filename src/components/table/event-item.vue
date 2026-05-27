@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import type { PositionedEvent, Table } from '@/types'
-import { type CSSProperties, onMounted, ref } from 'vue'
+import { computed, type CSSProperties, nextTick, onMounted, ref } from 'vue'
+import OrderContent from '@/components/table/order-content.vue'
+import ReservationContent from '@/components/table/reservation-content.vue'
 
 const props = defineProps<{
   event: PositionedEvent
@@ -15,14 +17,38 @@ const props = defineProps<{
 
 const position = ref<CSSProperties>({ display: 'none' })
 
-onMounted(() => {
+const contentRef = ref<HTMLElement | null>(null)
+const isOverflowing = ref(false)
+
+const checkOverflow = () => {
+  const el = contentRef.value
+
+  if (!el) return
+
+  isOverflowing.value = el.scrollWidth > el.clientWidth || el.scrollHeight > el.clientHeight
+}
+
+onMounted(async () => {
   position.value = props.positionStyleFunc(
     props.event.start_time,
     props.event.end_time,
     props.event.tableId,
     props.event.tableId,
   )
+
+  await nextTick()
+
+  checkOverflow()
 })
+
+const isEventOrder = computed(() => props.event.type === 'order' || props.event.type === 'banquet')
+
+const content = computed(() => ({
+  component: isEventOrder.value ? OrderContent : ReservationContent,
+  props: {
+    [isEventOrder.value ? 'order' : 'reservation']: props.event,
+  },
+}))
 </script>
 
 <template>
@@ -37,11 +63,16 @@ onMounted(() => {
   >
     <div
       class="event"
-      :class="[{ 'event--disabled': props.isDragging }, `event--${props.event.type}`]"
+      :class="[
+        {
+          'event--disabled': props.isDragging,
+          'event--overflow': isOverflowing,
+        },
+        `event--${props.event.type}`,
+      ]"
     >
-      <div class="event__content">
-        <p>{{props.event.type}} {{ props.event.id }}</p>
-        <p>{{ props.event.start_time }} - {{ props.event.end_time }}</p>
+      <div ref="contentRef" class="event__content">
+        <component :is="content.component" v-bind="content.props" />
       </div>
     </div>
   </div>
@@ -53,7 +84,6 @@ onMounted(() => {
   display: grid;
   grid-template-columns: repeat(var(--column-count, 1), 1fr);
   pointer-events: none;
-  z-index: calc(var(--level, 0) + 1);
 }
 
 .event {
@@ -65,6 +95,8 @@ onMounted(() => {
   height: 100%;
   grid-column: calc(var(--column-index, 0) + 1);
   pointer-events: auto;
+  position: relative;
+  z-index: calc(var(--level, 0) + 1);
 
   &:before {
     content: '';
@@ -76,6 +108,29 @@ onMounted(() => {
 
   &__content {
     padding: 2px;
+    height: 100%;
+    flex: 1;
+    overflow: hidden;
+
+    div {
+      cursor: pointer;
+    }
+  }
+
+  &:has(.event__content > div:hover) {
+    z-index: 1000;
+    backdrop-filter: blur(4px);
+  }
+
+  &--overflow:has(.event__content > div:hover) {
+    justify-self: start;
+    min-height: fit-content;
+  }
+
+  &--overflow:has(.event__content > div:hover) .event__content {
+    min-width: fit-content;
+    min-height: fit-content;
+    overflow: visible;
   }
 
   &--disabled {

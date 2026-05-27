@@ -26,7 +26,7 @@ export interface Order {
   end_time: string
   id: string
   start_time: string
-  status: string
+  status: 'New' | 'Bill' | 'Closed' | 'Banquet'
 }
 
 export interface OrderCreateRequest extends Omit<Order, 'id'> {
@@ -40,17 +40,17 @@ export interface Reservation {
   num_people: number
   phone_number: string
   seating_time: string
-  status: string
+  status: 'Живая очередь' | 'Новая' | 'Заявка' | 'Открыт' | 'Закрыт'
 }
 
-export type TableEvent = (Order | Reservation) & {
+export type TableEvent<T = Order | Reservation> = T & {
   tableId: Table['id']
   start_time: string
   end_time: string
   type: 'order' | 'banquet' | 'waiting-guests' | 'reservation'
 }
 
-export type PositionedEvent = TableEvent & {
+export type PositionedEvent<T = Order | Reservation> = TableEvent<T> & {
   column: number
   columnsCount: number
   level: number

@@ -272,7 +272,7 @@ const visibleEvents = computed(() => {
     </div>
     <event-item
       v-for="event in visibleEvents"
-      :key="event.id"
+      :key="`${props.visibleTableCells.length}-${event.id}`"
       :event="event"
       :is-dragging="isDragging"
       :position-style-func="getPositionStyle"

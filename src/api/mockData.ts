@@ -7,7 +7,7 @@ export const mockData = {
     // timezone: 'Europe/Ulyanovsk',
     restaurant_name: 'Супра',
     opening_time: '11:00',
-    closing_time: '00:00',
+    closing_time: '23:40',
   },
   tables: [
     {
