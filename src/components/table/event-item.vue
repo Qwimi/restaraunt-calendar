@@ -6,7 +6,7 @@ import ReservationContent from '@/components/table/reservation-content.vue'
 
 const props = defineProps<{
   event: PositionedEvent
-  isDragging: boolean
+  disabled: boolean
   positionStyleFunc: (
     startTime: string,
     endTime: string,
@@ -72,7 +72,7 @@ const content = computed(() => {
       class="event"
       :class="[
         {
-          'event--disabled': props.isDragging,
+          'event--disabled': props.disabled,
           'event--overflow': isOverflowing,
         },
         `event--${props.event.type}`,
@@ -142,6 +142,7 @@ const content = computed(() => {
 
   &--disabled {
     pointer-events: none;
+    opacity: 0.3;
   }
 
   &--order {

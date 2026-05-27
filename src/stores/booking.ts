@@ -41,8 +41,6 @@ export const useBookingStore = defineStore('booking', () => {
       end.setDate(end.getDate() + 1)
     }
 
-    roundUpToStep(end, TIMESTEP.FULL)
-
     while (start <= end) {
       result.push(formatDateToString(start))
 
