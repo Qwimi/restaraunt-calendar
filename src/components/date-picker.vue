@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import CheckboxItem from '@/components/checkbox-item.vue'
 import CheckboxGroup from '@/components/checkbox-group.vue'
+import { formatDate, formatDaySubtitle } from '@/composables'
 
 const props = defineProps<{
   available_days: string[]
@@ -8,34 +9,6 @@ const props = defineProps<{
 }>()
 
 const selectedDay = defineModel<string>()
-
-const formatDate = (dateString: string) => {
-  const date = new Date(dateString)
-
-  return new Intl.DateTimeFormat('ru-RU', {
-    day: 'numeric',
-    month: 'long',
-  }).format(date)
-}
-
-const formatDaySubtitle = (dateString: string) => {
-  const date = new Date(dateString)
-
-  const currentDate = new Date(props.current_date)
-
-  currentDate.setHours(0, 0, 0, 0)
-  date.setHours(0, 0, 0, 0)
-
-  const diff = (date.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24)
-
-  if (diff === 0) return 'сегодня'
-  if (diff === -1) return 'вчера'
-  if (diff === 1) return 'завтра'
-
-  return new Intl.DateTimeFormat('ru-RU', {
-    weekday: 'long',
-  }).format(date)
-}
 </script>
 
 <template>
@@ -46,7 +19,7 @@ const formatDaySubtitle = (dateString: string) => {
       </div>
 
       <div class="day__subtitle">
-        {{ formatDaySubtitle(day) }}
+        {{ formatDaySubtitle(day, props.current_date) }}
       </div>
     </checkbox-item>
   </checkbox-group>

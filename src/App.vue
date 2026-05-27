@@ -49,6 +49,10 @@ onMounted(() => {
       :time-cells="visibleTimeCells"
       :visible-table-cells="visibleTableCells"
       :events="visibleEvents"
+      :selected-date="selectedDate"
+      :current-date="current_day"
+      :time-zone="restaurant.timezone"
+      @create-order="bookingStore.createOrder"
     />
   </div>
 </template>

@@ -4,15 +4,15 @@ import { axiosInstance } from '@/api/instance.ts'
 import { mockApi } from '@/api/mockApi.ts'
 
 interface IBookingApi {
-  apiGetBookingData(): Promise<Booking>
-  createOrder(orderData: OrderCreateRequest): Promise<Order>
+  apiGetBookingData(): Promise<{ data: Booking }>
+  createOrder(orderData: OrderCreateRequest): Promise<{ data: Order } | void>
 }
 
 const realApi: IBookingApi = {
-  apiGetBookingData(): Promise<Booking> {
+  apiGetBookingData() {
     return axiosInstance.get('booking')
   },
-  createOrder(orderData): Promise<Order> {
+  createOrder(orderData)  {
     return axiosInstance.post('order', orderData)
   },
 }

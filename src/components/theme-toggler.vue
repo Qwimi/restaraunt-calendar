@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import AppIcon from '@/components/app-icon.vue'
+import AppButton from '@/components/app-button.vue'
 
 type Theme = 'dark' | 'light'
 
@@ -31,9 +32,9 @@ watch(
 </script>
 
 <template>
-  <button class="theme-toggler" @click="changeTheme">
+  <app-button variant="neutral" class="theme-toggler" @click="changeTheme">
     <app-icon :name="theme === 'dark' ? 'solar' : 'moon'" />
-  </button>
+  </app-button>
 </template>
 
 <style scoped lang="scss">
@@ -45,7 +46,5 @@ watch(
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  border-radius: 4px;
-  background: var(--color-theme-toggler-bg);
 }
 </style>

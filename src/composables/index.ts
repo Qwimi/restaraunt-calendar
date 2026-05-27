@@ -173,6 +173,65 @@ export const getFormatedTimeDuration = (timeStrA: string, timeStrB: string): str
   return `${minutes}м`
 }
 
+/**
+ * Форматирует строку даты в текстовый формат на русском языке.
+ *
+ * @param dateString - строка с датой
+ * @returns Строка с днем и полным названием месяца (например, "27 мая").
+ */
+export const formatDate = (dateString: string) => {
+  const date = new Date(dateString)
+
+  return new Intl.DateTimeFormat('ru-RU', {
+    day: 'numeric',
+    month: 'long',
+  }).format(date)
+}
+
+/**
+ * Возвращает относительное описание дня или день недели для указанной даты.
+ *
+ * Сравнивает целевую дату с текущей без учета времени.
+ *
+ * @param dateString - целевая дата
+ * @param currentDateString - текущая дата
+ * @returns "сегодня", "вчера", "завтра" или день недели
+ */
+export const formatDaySubtitle = (dateString: string, currentDateString: string) => {
+  const date = new Date(dateString)
+
+  const currentDate = new Date(currentDateString)
+
+  currentDate.setHours(0, 0, 0, 0)
+  date.setHours(0, 0, 0, 0)
+
+  const diff = (date.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24)
+
+  if (diff === 0) return 'сегодня'
+  if (diff === -1) return 'вчера'
+  if (diff === 1) return 'завтра'
+
+  return new Intl.DateTimeFormat('ru-RU', {
+    weekday: 'long',
+  }).format(date)
+}
+
+export const setISOString = (dateStr: string, timeStr: string, timeZone: string) => {
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: timeZone,
+    timeZoneName: 'shortOffset',
+  })
+
+  const parts = formatter.formatToParts(new Date())
+  const gmtOffset = parts.find((p) => p.type === 'timeZoneName')!.value
+
+  let offset = gmtOffset.replace('GMT', '')
+  if (offset === '') offset = '+00:00'
+  if (!offset.includes(':')) offset += ':00'
+
+  return `${dateStr}T${timeStr}:00.000000${offset}`
+}
+
 export const useTableCoords = (tableWrapperRef: Ref<HTMLDivElement | null>) => {
   const bookingStore = useBookingStore()
 
@@ -390,4 +449,3 @@ export const calculateEventPositions = (events: TableEvent[]): PositionedEvent[]
 
   return result
 }
-

@@ -24,10 +24,11 @@ const badge = computed<BadgeProps>(() => {
 
 <template>
   <div class="reservation">
+    <p class="reservation__number">№{{ props.reservation.id }}</p>
     <p class="reservation__title">
       <span> {{ props.reservation.name_for_reservation }}; </span>
       <span class="reservation__capacity">
-        <span class="reservation__number"> {{ props.reservation.num_people }} </span>чел
+        <span class="reservation__people-number"> {{ props.reservation.num_people }} </span>чел
       </span>
     </p>
     <event-badge v-if="badge" v-bind="badge" />
@@ -46,6 +47,11 @@ const badge = computed<BadgeProps>(() => {
   min-width: fit-content;
   min-height: fit-content;
 
+  &__number {
+    font-size: var(--size-font-extrasmall);
+    line-height: var(--size-line-height-reset);
+  }
+
   &__title {
     font-weight: 600;
   }
@@ -58,11 +64,11 @@ const badge = computed<BadgeProps>(() => {
 
   &__capacity {
     font-size: var(--size-font-extrasmall);
-    line-height: 1;
+    line-height: var(--size-line-height-reset);
     margin-left: 4px;
   }
 
-  &__number {
+  &__people-number {
     font-size: var(--size-font-small);
     line-height: var(--size-line-height-small);
     font-weight: 600;

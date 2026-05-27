@@ -1,23 +1,26 @@
 <script setup lang="ts">
-import type { PositionedEvent, Table } from '@/types'
+import type { OrderCreateRequest, PositionedEvent, Table } from '@/types'
 import HeaderCell from '@/components/table/header-cell.vue'
 import TableCell from '@/components/table/table-cell.vue'
 import { computed, type CSSProperties, onMounted, onUnmounted, ref } from 'vue'
 import {
   getMaxTimeStr,
   getMinTimeStr,
-  getFormatedTimeDuration,
   useTableCoords,
   getMinutesFromStartOfDay,
 } from '@/composables'
 import CurrentTime from '@/components/table/current-time.vue'
 import EventItem from '@/components/table/event-item.vue'
 import { useVirtualizer } from '@tanstack/vue-virtual'
+import OrderForm from '@/components/table/order-form.vue'
 
 const props = defineProps<{
   timeCells: string[]
   visibleTableCells: Omit<Table, 'orders' | 'reservations'>[]
   events: PositionedEvent[]
+  selectedDate: string
+  currentDate: string
+  timeZone: string
 }>()
 
 interface SelectionPoint {
@@ -38,7 +41,6 @@ const selectionArea = computed(() => {
 
   const startTime = getMinTimeStr([pointA.value.startTime, pointB.value.startTime])
   const endTime = getMaxTimeStr([pointA.value.endTime, pointB.value?.endTime])
-  const duration = getFormatedTimeDuration(startTime, endTime)
 
   const aIndex = props.visibleTableCells.findIndex((table) => table.id === pointA.value?.table)
   const bIndexRaw = pointB.value
@@ -55,7 +57,6 @@ const selectionArea = computed(() => {
   return {
     startTime,
     endTime,
-    duration,
     tablesNumbers: tablesData.map((table) => table.number),
     tablesCapacity: tablesData.reduce((acc, table) => acc + table.capacity, 0),
     tableIds,
@@ -164,6 +165,15 @@ const clearSelection = () => {
   pointB.value = null
 }
 
+const emit = defineEmits<{
+  createOrder: [OrderCreateRequest]
+}>()
+
+const createOrder = (order: OrderCreateRequest) => {
+  emit('createOrder', order)
+  clearSelection()
+}
+
 onMounted(() => window.addEventListener('mouseup', endDragging))
 onUnmounted(() => window.removeEventListener('mouseup', endDragging))
 
@@ -262,13 +272,19 @@ const visibleEvents = computed(() => {
     </table>
     <current-time v-if="currentTimeY" :y="currentTimeY.y" :width="currentTimeY.width" />
     <div v-if="selectionArea" class="table-wrapper__selection-overlay" :style="overlayStyle">
-      <!--      TODO: убрать после создания формы-->
-      <div class="overlay-body">
-        <button class="overlay-body__btn" @click="clearSelection">Закрыть</button>
-        <pre>
-          {{ selectionArea }}
-        </pre>
-      </div>
+      <order-form
+        :start-time="selectionArea.startTime"
+        :end-time="selectionArea.endTime"
+        :tables-numbers="selectionArea.tablesNumbers"
+        :tables-capacity="selectionArea.tablesCapacity"
+        :table-ids="selectionArea.tableIds"
+        :selected-date="props.selectedDate"
+        :current-date="props.currentDate"
+        :time-zone="props.timeZone"
+        :is-dragging="isDragging"
+        @submit="createOrder"
+        @cancel="clearSelection"
+      />
     </div>
     <event-item
       v-for="event in visibleEvents"
@@ -292,23 +308,6 @@ $border-style: 1px solid var(--color-table-border);
     background-color: var(--color-table-overlay-bg);
     border: 1px solid var(--color-table-overlay-border);
     border-radius: 4px;
-  }
-}
-
-// TODO: убрать после создания формы
-.overlay-body {
-  padding: 12px;
-  display: flex;
-  flex-direction: column;
-
-  pre {
-    pointer-events: none;
-  }
-
-  &__btn {
-    background-color: var(--color-blue);
-    padding: 4px;
-    margin-left: auto;
   }
 }
 

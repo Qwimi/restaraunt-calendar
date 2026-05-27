@@ -29,8 +29,10 @@ export interface Order {
   status: 'New' | 'Bill' | 'Closed' | 'Banquet'
 }
 
-export interface OrderCreateRequest extends Omit<Order, 'id'> {
-  table_id: Table['id']
+export interface OrderCreateRequest {
+  tableIds: Table['id'][]
+  startTime: string
+  endTime: string
 }
 
 export interface Reservation {

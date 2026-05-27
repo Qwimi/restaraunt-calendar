@@ -1,7 +1,7 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 import {
-  type Booking,
+  type Booking, type OrderCreateRequest,
   type PositionedEvent,
   type Restaurant,
   type Table,
@@ -15,7 +15,6 @@ import {
   formatByTimezone,
   formatDateToString,
   parseStringToDate,
-  roundUpToStep,
 } from '@/composables'
 
 export const useBookingStore = defineStore('booking', () => {
@@ -118,17 +117,30 @@ export const useBookingStore = defineStore('booking', () => {
   }
 
   const getBookingData = async () => {
-    const data = await bookingApi.apiGetBookingData()
-    available_days.value = data.available_days
-    current_day.value = data.current_day
-    restaurant.value = data.restaurant
-    tables.value = data.tables
+    try {
+      const { data } = await bookingApi.apiGetBookingData()
+      available_days.value = data.available_days
+      current_day.value = data.current_day
+      restaurant.value = data.restaurant
+      tables.value = data.tables
 
-    selectedDate.value = current_day.value
+      selectedDate.value = current_day.value
 
-    startTimeUpdates()
+      startTimeUpdates()
 
-    return data
+      return data
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
+  const createOrder = async (order: OrderCreateRequest) => {
+    try {
+      await bookingApi.createOrder(order)
+    } catch (e) {
+      console.error(e)
+    }
+
   }
 
   return {
@@ -147,5 +159,6 @@ export const useBookingStore = defineStore('booking', () => {
     visibleTableCells,
     visibleTimeCells,
     visibleEvents,
+    createOrder,
   }
 })
