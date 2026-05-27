@@ -33,7 +33,7 @@ const props = defineProps<BadgeProps>()
   }
 
   &--primary {
-    color: var(--color-badge-primary-color);
+    color: var(--color-badge-primary-text);
     background-color: var(--color-badge-primary-bg);
   }
 

@@ -37,9 +37,12 @@
   --color-badge-success-bg: rgb(74 201 155 / 32%);
   --color-badge-success-text: var(--color-text-primary);
   --color-badge-primary-bg: var(--color-blue);
-  --color-badge-primary-text: var(--color-text-primary);
+  --color-badge-primary-text: var(--color-white);
   --color-badge-primary-reserve-text: #0097FD;
   --color-badge-primary-reserve-bg: color-mix(in srgb, var(--color-badge-primary-reserve-text) 10%, transparent);
+
+  --color-scroolbar-track: color-mix(in srgb, var(--color-text-primary) 12%, transparent);
+  --color-scroolbar-thumb: color-mix(in srgb, var(--color-text-primary) 40%, transparent);
 
   --size-font-extrasmall: 8px;
   --size-font-small: 11px;
@@ -87,4 +90,34 @@ body {
 
 .container {
   padding-inline: 20px;
+}
+
+
+/* Modern browsers — Chrome 121+, Edge 121+, Firefox, Safari 18.2+ */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-scroolbar-thumb) var(--color-scroolbar-track);
+}
+
+/* Legacy WebKit — older Chrome/Edge/Safari, radius, borders & shadows */
+*::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+*::-webkit-scrollbar-track {
+  background-color: var(--color-scroolbar-track);
+  border-radius: 2px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: var(--color-scroolbar-thumb);
+  border-radius: 2px;
+  min-height: 40px;
+}
+
+*::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
 }
