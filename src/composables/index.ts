@@ -336,7 +336,7 @@ const calculateGroupEventsPositions = (events: TableEvent[]): PositionedEvent[] 
   for (const column of eventColumnGroups) {
     const firstEvent = column[0]!
 
-    const firstEnd = getMinutesFromStartOfDay(firstEvent.end_time)
+    const firstStart = getMinutesFromStartOfDay(firstEvent.start_time)
 
     let level = 0
 
@@ -344,9 +344,9 @@ const calculateGroupEventsPositions = (events: TableEvent[]): PositionedEvent[] 
     for (const prevGroup of eventColumnGroupsOverlap) {
       const prevEvent = prevGroup[0]!
 
-      const prevStart = getMinutesFromStartOfDay(prevEvent.start_time)
+      const prevEnd = getMinutesFromStartOfDay(prevEvent.end_time)
 
-      const isOverlap = firstEnd > prevStart
+      const isOverlap = firstStart < prevEnd
 
       // Если нашли пересечение проставляем уровень(смещение)
       if (isOverlap) {
