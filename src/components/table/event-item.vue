@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { PositionedEvent, Table } from '@/types'
+import type { Order, PositionedEvent, Reservation, Table } from '@/types'
 import { computed, type CSSProperties, nextTick, onMounted, ref } from 'vue'
 import OrderContent from '@/components/table/order-content.vue'
 import ReservationContent from '@/components/table/reservation-content.vue'
@@ -43,12 +43,19 @@ onMounted(async () => {
 
 const isEventOrder = computed(() => props.event.type === 'order' || props.event.type === 'banquet')
 
-const content = computed(() => ({
-  component: isEventOrder.value ? OrderContent : ReservationContent,
-  props: {
-    [isEventOrder.value ? 'order' : 'reservation']: props.event,
-  },
-}))
+const content = computed(() => {
+  if (isEventOrder.value) {
+    return {
+      component: OrderContent,
+      props: { order: props.event as PositionedEvent<Order> },
+    }
+  }
+
+  return {
+    component: ReservationContent,
+    props: { reservation: props.event as PositionedEvent<Reservation> },
+  }
+})
 </script>
 
 <template>

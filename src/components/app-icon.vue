@@ -19,7 +19,14 @@ const icons = import.meta.glob('../assets/icons/*.svg', {
 })
 
 watchEffect(async () => {
-  svgContent.value = (await icons[`../assets/icons/${props.name}.svg`]()) as string
+  const path = `../assets/icons/${props.name}.svg`
+  const loader = icons[path]
+
+  if (loader) {
+    svgContent.value = (await loader()) as string
+  } else {
+    svgContent.value = ''
+  }
 })
 </script>
 

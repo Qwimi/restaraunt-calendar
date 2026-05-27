@@ -14,7 +14,9 @@
     "lint:eslint": "eslint . --fix --cache",
     "format": "prettier --write --experimental-cli src/",
     "lint:style": "stylelint \"**/*.{vue,scss}\"",
-    "lint:style:fix": "stylelint \"**/*.{vue,scss}\" --fix"
+    "lint:style:fix": "stylelint \"**/*.{vue,scss}\" --fix",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d dist"
   },
   "dependencies": {
     "@tanstack/vue-virtual": "^3.13.26",

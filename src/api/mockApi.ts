@@ -6,7 +6,7 @@ const delay = (ms = 400) => new Promise((resolve) => setTimeout(resolve, ms))
 export const mockApi = {
   async apiGetBookingData(): Promise<Booking> {
     await delay()
-    return structuredClone(mockData)
+    return structuredClone(mockData) as Booking
   },
 
   async createOrder(orderData: OrderCreateRequest): Promise<Order> {

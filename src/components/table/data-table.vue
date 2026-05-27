@@ -2,7 +2,7 @@
 import type { PositionedEvent, Table } from '@/types'
 import HeaderCell from '@/components/table/header-cell.vue'
 import TableCell from '@/components/table/table-cell.vue'
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, type CSSProperties, onMounted, onUnmounted, ref } from 'vue'
 import {
   getMaxTimeStr,
   getMinTimeStr,
@@ -143,7 +143,7 @@ const paddingRight = computed(() => {
   return colVirtualizer.value.getTotalSize() - virtualCols.value[virtualCols.value.length - 1]!.end
 })
 
-const overlayStyle = computed(() => {
+const overlayStyle = computed<CSSProperties>(() => {
   if (!selectionArea.value) {
     return { display: 'none' }
   }
