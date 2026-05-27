@@ -29,6 +29,16 @@
 
   --color-table-current-time: #FF7043;
 
+  --color-badge-neutral-bg: rgb(255 255 255 / 12%);
+  --color-badge-neutral-text: var(--color-text-primary);
+  --color-badge-success-bg: rgb(74 201 155 / 32%);
+  --color-badge-success-text: var(--color-text-primary);
+  --color-badge-primary-bg: var(--color-blue);
+  --color-badge-primary-text: var(--color-text-primary);
+  --color-badge-primary-reserve-text: #0097FD;
+  --color-badge-primary-reserve-bg: color-mix(in srgb,var(--color-badge-primary-reserve-text) 10%, transparent);
+
+  --size-font-extrasmall: 8px;
   --size-font-small: 11px;
   --size-font-medium: 13px;
   --size-font-large: 20px;
@@ -39,7 +49,9 @@
   --size-line-height-large: 20px;
   --size-line-height-extralarge: 28px;
 
-  --size-icon: 16px;
+  --size-icon-xs: 12px;
+  --size-icon-s: 16px;
+  --size-icon-m: 24px;
 
   --size-cell-height: 40px;
   --size-cell-width: 80px;
