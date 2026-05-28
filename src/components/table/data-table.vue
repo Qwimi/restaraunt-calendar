@@ -228,7 +228,7 @@ const checkOverflow = async (node: VNode) => {
   const tableRect = tableWrapperRef.value.getBoundingClientRect()
   const formRect = (node.el as HTMLElement).getBoundingClientRect()
 
-  formVerticalAlign.value = tableRect.top > formRect.top ? 'top' : 'bottom'
+  formVerticalAlign.value = tableRect.top > formRect.top - 50 ? 'top' : 'bottom'
 }
 </script>
 
