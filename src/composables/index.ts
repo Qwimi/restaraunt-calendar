@@ -232,6 +232,23 @@ export const setISOString = (dateStr: string, timeStr: string, timeZone: string)
   return `${dateStr}T${timeStr}:00.000000${offset}`
 }
 
+const sortDates = (events: TableEvent[]) => {
+  events.sort((a, b) => {
+    const startA = getMinutesFromStartOfDay(a.start_time)
+    const startB = getMinutesFromStartOfDay(b.start_time)
+
+    if (startA !== startB) {
+      return startA - startB
+    }
+
+    // Если даты начала одинаковые - сравниваем по длине события
+    const durationA = getMinutesFromStartOfDay(a.end_time) - startA
+    const durationB = getMinutesFromStartOfDay(b.end_time) - startB
+
+    return durationB - durationA
+  })
+}
+
 export const useTableCoords = (tableWrapperRef: Ref<HTMLDivElement | null>) => {
   const bookingStore = useBookingStore()
 
@@ -349,25 +366,12 @@ export const useTableCoords = (tableWrapperRef: Ref<HTMLDivElement | null>) => {
 
 const calculateGroupEventsPositions = (events: TableEvent[]): PositionedEvent[] => {
   // Сортируем по дате начала
-  const sortedEvents = events.sort((a, b) => {
-    const startA = getMinutesFromStartOfDay(a.start_time)
-    const startB = getMinutesFromStartOfDay(b.start_time)
-
-    if (startA !== startB) {
-      return startA - startB
-    }
-
-    // Если даты начала одинаковые - сравниваем по длине события
-    const durationA = getMinutesFromStartOfDay(a.end_time) - startA
-    const durationB = getMinutesFromStartOfDay(b.end_time) - startB
-
-    return durationB - durationA
-  })
+  sortDates(events);
 
   // Пересечения, где время начал событий находятся в промежутке +-30 минут
   const eventColumnGroups: TableEvent[][] = []
 
-  for (const event of sortedEvents) {
+  for (const event of events) {
     const currentStart = getMinutesFromStartOfDay(event.start_time)
 
     const lastGroup = eventColumnGroups.at(-1)
@@ -426,7 +430,11 @@ const calculateGroupEventsPositions = (events: TableEvent[]): PositionedEvent[] 
     eventColumnGroupsOverlap.push(positionedColumnGroup)
   }
 
-  return eventColumnGroupsOverlap.flat()
+  const result = eventColumnGroupsOverlap.flat()
+
+  sortDates(result)
+
+  return result
 }
 
 export const calculateEventPositions = (events: TableEvent[]): PositionedEvent[] => {

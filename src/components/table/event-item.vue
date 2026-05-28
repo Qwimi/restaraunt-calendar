@@ -35,34 +35,41 @@ const checkOverlap = () => {
 
   const currentChild = el.children[0] as HTMLElement
   if (!currentChild) return
-  const rect = currentChild.getBoundingClientRect()
 
-  const elementsAtPoint = document.elementsFromPoint((rect.left + rect.right) / 2, rect.bottom + 1)
+  // Текущи элемент, который мы будем ограничивать по высоте
+  const rect = currentChild.getBoundingClientRect()
 
   const parentEvent = el.closest('.event')
   if (!parentEvent) return
+  const parentRect = parentEvent.getBoundingClientRect()
 
   const currentZIndex = parseInt(window.getComputedStyle(parentEvent).zIndex) || 0
 
-  const overlappingElement = elementsAtPoint.find((overlappingElement) => {
-    if (
-      overlappingElement === el.parentElement ||
-      overlappingElement === el ||
-      !overlappingElement.classList.contains('event__content')
-    )
-      return false
+  const overlapCandidates = document.querySelectorAll(`.event[data-table="${props.event.tableId}"]`)
+  const overlapping: Element[] = []
 
-    const elementParent = overlappingElement.closest('.event')
-    if (!elementParent) return false
+  overlapCandidates.forEach((node) => {
+    if (node === parentEvent) return
 
-    const elementZIndex = parseInt(window.getComputedStyle(elementParent).zIndex) || 0
+    // Элемент, по верхней грани которого нужно будет ограничить rect
+    const candidateRect = node.getBoundingClientRect()
 
-    return currentZIndex < elementZIndex
+    if (!(candidateRect.top < rect.bottom && candidateRect.bottom > rect.top)) return
+    // Если элементы в одной колонке - пересечения нет
+    if (parentRect.right == candidateRect.left) return
+
+    const z = parseInt(getComputedStyle(node).zIndex) || 0
+
+    if (z >= currentZIndex) {
+      overlapping.push(node)
+    }
   })
 
-  if (!overlappingElement) return
+  if (!overlapping.length) return
 
-  maxContentHeight.value = overlappingElement.getBoundingClientRect().top - rect.top + 'px'
+  const minTop = Math.min(...overlapping.map((el) => el.getBoundingClientRect().top))
+
+  maxContentHeight.value = minTop - rect.top + 'px'
 }
 
 onMounted(async () => {
@@ -76,6 +83,8 @@ onMounted(async () => {
   await nextTick()
 
   checkOverflow()
+
+  await nextTick()
 
   checkOverlap()
 })
@@ -117,6 +126,7 @@ const content = computed(() => {
         `event--${props.event.type}`,
       ]"
       :style="{ '--max-height': maxContentHeight }"
+      :data-table="props.event.tableId"
     >
       <div ref="contentWrapperRef" class="event__content-wrapper">
         <component :is="content.component" class="event__content" v-bind="content.props" />
@@ -141,7 +151,6 @@ const content = computed(() => {
   background-color: color-mix(in srgb, var(--color-accent) 16%, transparent);
   height: 100%;
   grid-column: calc(var(--column-index, 0) + 1);
-  pointer-events: auto;
   position: relative;
   z-index: calc(var(--level, 0) + 1);
 
@@ -163,6 +172,7 @@ const content = computed(() => {
 
   &__content {
     cursor: pointer;
+    pointer-events: auto;
   }
 
   &:has(&__content:hover) {

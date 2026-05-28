@@ -14,8 +14,8 @@ import {
 import {
   getMaxTimeStr,
   getMinTimeStr,
-  useTableCoords,
   getMinutesFromStartOfDay,
+  useTableCoords,
 } from '@/composables'
 import CurrentTime from '@/components/table/current-time.vue'
 import EventItem from '@/components/table/event-item.vue'
@@ -123,7 +123,7 @@ const rowVirtualizerOptions = computed(() => {
     count: props.timeCells.length,
     getScrollElement: () => tableWrapperRef.value,
     estimateSize: () => 40,
-    overscan: 3,
+    overscan: 5,
   }
 })
 
