@@ -31,8 +31,11 @@ const badge = computed<BadgeProps | null>(() => {
 .order {
   font-size: var(--size-font-small);
   line-height: var(--size-line-height-small);
-  min-width: fit-content;
-  min-height: fit-content;
+
+  p {
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
 
   &__title {
     font-weight: 600;

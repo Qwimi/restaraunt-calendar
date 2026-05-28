@@ -12,6 +12,7 @@ const props = defineProps<{
   selectedDate: string
   isDragging: boolean
   timeZone: string
+  verticalAlign: 'top' | 'bottom'
 }>()
 
 const emit = defineEmits<{
@@ -32,7 +33,7 @@ const submit = () => {
 </script>
 
 <template>
-  <div class="overlay-form">
+  <div class="overlay-form" :class="`overlay-form--${props.verticalAlign}`">
     <p class="overlay-form__title">Новое бронирование</p>
     <p>
       {{ formatDate(props.selectedDate) }}
@@ -60,7 +61,6 @@ const submit = () => {
   background-color: var(--color-table-overlay-form-bg);
   border-radius: 4px;
   position: absolute;
-  bottom: 0;
   height: 100%;
   width: 100%;
   min-height: fit-content;
@@ -77,6 +77,14 @@ const submit = () => {
   font-size: var(--size-font-small);
   line-height: var(--size-line-height-small);
   color: var(--color-table-overlay-text-primary);
+
+  &--top {
+    top: 0;
+  }
+
+  &--bottom {
+    bottom: 0;
+  }
 
   &__title {
     font-weight: 700;

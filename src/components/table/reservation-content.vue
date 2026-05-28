@@ -33,7 +33,7 @@ const badge = computed<BadgeProps>(() => {
     </p>
     <event-badge v-if="badge" v-bind="badge" />
     <p class="reservation__phone">
-      <app-icon name="phone" size="xs" />
+      <app-icon class="reservation__phone-icon" name="phone" size="xs" />
       {{ props.reservation.phone_number }}
     </p>
     <p>{{ props.reservation.start_time }} - {{ props.reservation.end_time }}</p>
@@ -44,8 +44,11 @@ const badge = computed<BadgeProps>(() => {
 .reservation {
   font-size: var(--size-font-small);
   line-height: var(--size-line-height-small);
-  min-width: fit-content;
-  min-height: fit-content;
+
+  p {
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
 
   &__number {
     font-size: var(--size-font-extrasmall);
@@ -72,6 +75,10 @@ const badge = computed<BadgeProps>(() => {
     font-size: var(--size-font-small);
     line-height: var(--size-line-height-small);
     font-weight: 600;
+  }
+
+  &__phone-icon {
+    flex-shrink: 0;
   }
 }
 </style>

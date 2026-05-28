@@ -17,15 +17,52 @@ const props = defineProps<{
 
 const position = ref<CSSProperties>({ display: 'none' })
 
-const contentRef = ref<HTMLElement | null>(null)
+const contentWrapperRef = ref<HTMLElement | null>(null)
 const isOverflowing = ref(false)
 
 const checkOverflow = () => {
-  const el = contentRef.value
-
+  const el = contentWrapperRef.value
   if (!el) return
 
   isOverflowing.value = el.scrollWidth > el.clientWidth || el.scrollHeight > el.clientHeight
+}
+
+const maxContentHeight = ref('none')
+
+const checkOverlap = () => {
+  const el = contentWrapperRef.value
+  if (!el) return
+
+  const currentChild = el.children[0] as HTMLElement
+  if (!currentChild) return
+  const rect = currentChild.getBoundingClientRect()
+
+  const elementsAtPoint = document.elementsFromPoint((rect.left + rect.right) / 2, rect.bottom + 1)
+
+  const parentEvent = el.closest('.event')
+  if (!parentEvent) return
+
+  const currentZIndex = parseInt(window.getComputedStyle(parentEvent).zIndex) || 0
+
+  const overlappingElement = elementsAtPoint.find((overlappingElement) => {
+    if (
+      overlappingElement === el.parentElement ||
+      overlappingElement === el ||
+      !overlappingElement.classList.contains('event__content')
+    )
+      return false
+
+    const elementParent = overlappingElement.closest('.event')
+    if (!elementParent) return false
+
+    const elementZIndex = parseInt(window.getComputedStyle(elementParent).zIndex) || 0
+
+    return currentZIndex < elementZIndex
+  })
+
+  if (!overlappingElement) return
+
+  maxContentHeight.value = overlappingElement.getBoundingClientRect().top - rect.top + 'px'
 }
 
 onMounted(async () => {
@@ -39,6 +76,8 @@ onMounted(async () => {
   await nextTick()
 
   checkOverflow()
+
+  checkOverlap()
 })
 
 const isEventOrder = computed(() => props.event.type === 'order' || props.event.type === 'banquet')
@@ -77,9 +116,10 @@ const content = computed(() => {
         },
         `event--${props.event.type}`,
       ]"
+      :style="{ '--max-height': maxContentHeight }"
     >
-      <div ref="contentRef" class="event__content">
-        <component :is="content.component" v-bind="content.props" />
+      <div ref="contentWrapperRef" class="event__content-wrapper">
+        <component :is="content.component" class="event__content" v-bind="content.props" />
       </div>
     </div>
   </div>
@@ -113,31 +153,34 @@ const content = computed(() => {
     background-color: var(--color-accent);
   }
 
-  &__content {
+  &__content-wrapper {
     padding: 2px;
     height: 100%;
     flex: 1;
     overflow: hidden;
-
-    div {
-      cursor: pointer;
-    }
+    max-height: var(--max-height);
   }
 
-  &:has(.event__content > div:hover) {
+  &__content {
+    cursor: pointer;
+  }
+
+  &:has(&__content:hover) {
     z-index: 1000;
     backdrop-filter: blur(4px);
   }
 
-  &--overflow:has(.event__content > div:hover) {
+  &--overflow:has(&__content:hover) {
     justify-self: start;
     min-height: fit-content;
   }
 
-  &--overflow:has(.event__content > div:hover) .event__content {
+  &:has(&__content:hover) &__content-wrapper {
+    width: 100%;
     min-width: fit-content;
     min-height: fit-content;
     overflow: visible;
+    max-height: none;
   }
 
   &--disabled {

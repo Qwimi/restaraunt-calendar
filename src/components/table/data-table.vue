@@ -2,7 +2,15 @@
 import type { OrderCreateRequest, PositionedEvent, Table } from '@/types'
 import HeaderCell from '@/components/table/header-cell.vue'
 import TableCell from '@/components/table/table-cell.vue'
-import { computed, type CSSProperties, onMounted, onUnmounted, ref } from 'vue'
+import {
+  computed,
+  type CSSProperties,
+  nextTick,
+  onMounted,
+  onUnmounted,
+  ref,
+  type VNode,
+} from 'vue'
 import {
   getMaxTimeStr,
   getMinTimeStr,
@@ -208,6 +216,20 @@ const visibleEvents = computed(() => {
     return tableVisible && timeVisible
   })
 })
+
+const formVerticalAlign = ref<'bottom' | 'top'>('bottom')
+
+const checkOverflow = async (node: VNode) => {
+  if (!tableWrapperRef.value) return
+
+  formVerticalAlign.value = 'bottom'
+  await nextTick()
+
+  const tableRect = tableWrapperRef.value.getBoundingClientRect()
+  const formRect = (node.el as HTMLElement).getBoundingClientRect()
+
+  formVerticalAlign.value = tableRect.top > formRect.top ? 'top' : 'bottom'
+}
 </script>
 
 <template>
@@ -282,9 +304,12 @@ const visibleEvents = computed(() => {
         :current-date="props.currentDate"
         :time-zone="props.timeZone"
         :is-dragging="isDragging"
+        :vertical-align="formVerticalAlign"
         @submit="createOrder"
         @cancel="clearSelection"
+        @vue:mounted="checkOverflow"
       />
+      {{ formVerticalAlign }}
     </div>
     <event-item
       v-for="event in visibleEvents"
