@@ -56,7 +56,7 @@ const checkOverlap = () => {
 
     if (!(candidateRect.top < rect.bottom && candidateRect.bottom > rect.top)) return
     // Если элементы в одной колонке - пересечения нет
-    if (parentRect.right == candidateRect.left) return
+    if (parentRect.right <= candidateRect.left) return
 
     const z = parseInt(getComputedStyle(node).zIndex) || 0
 
