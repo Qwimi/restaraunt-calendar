@@ -54,7 +54,6 @@ $border-style: 1px solid var(--color-table-border);
   border-top: $border-style;
   border-right: $border-style;
   padding: 0;
-
   user-select: none;
   touch-action: none;
   cursor: default;

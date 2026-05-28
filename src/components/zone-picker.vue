@@ -15,5 +15,3 @@ const selectedZone = defineModel<Table['zone'][]>()
     <checkbox-item v-for="zone in props.zones" :key="zone" :value="zone" />
   </checkbox-group>
 </template>
-
-<style scoped lang="scss"></style>

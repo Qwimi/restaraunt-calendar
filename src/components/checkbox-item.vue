@@ -35,10 +35,8 @@ const toggle = () => {
   background-color: var(--color-chechbox-bg);
   padding: 4px 6px;
   border-radius: 4px;
-
   font-size: var(--size-font-small);
   line-height: var(--size-line-height-medium);
-
   transition: background-color 0.3s;
 
   &--active {

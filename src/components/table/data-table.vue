@@ -360,7 +360,6 @@ $border-style: 1px solid var(--color-table-border);
   &__time-cell {
     vertical-align: top;
     padding-inline: 2px;
-
     height: var(--size-cell-height);
     color: var(--color-table-time-text);
     position: sticky;

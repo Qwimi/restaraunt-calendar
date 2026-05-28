@@ -67,13 +67,10 @@ const submit = () => {
   isolation: isolate;
   z-index: 1000;
   backdrop-filter: blur(4px);
-
   display: flex;
   flex-direction: column;
   gap: 4px;
-
   padding: 4px 8px;
-
   font-size: var(--size-font-small);
   line-height: var(--size-line-height-small);
   color: var(--color-table-overlay-text-primary);
@@ -120,7 +117,7 @@ const submit = () => {
       color: var(--color-table-overlay-text-secondary);
     }
 
-    &:not(:last-child):after {
+    &:not(:last-child)::after {
       content: '+';
       margin-left: 4px;
     }

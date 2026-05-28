@@ -17,7 +17,6 @@ const props = defineProps<BadgeProps>()
   padding: 2px;
   border-radius: 4px;
   white-space: nowrap;
-
   font-size: var(--size-font-extrasmall);
   line-height: var(--size-line-height-reset);
   font-weight: 600;

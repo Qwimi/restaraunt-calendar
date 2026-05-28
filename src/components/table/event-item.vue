@@ -154,7 +154,7 @@ const content = computed(() => {
   position: relative;
   z-index: calc(var(--level, 0) + 1);
 
-  &:before {
+  &::before {
     content: '';
     display: block;
     flex-shrink: 0;

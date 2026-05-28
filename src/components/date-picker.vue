@@ -28,14 +28,12 @@ const selectedDay = defineModel<string>()
 <style lang="scss" scoped>
 .day {
   flex-direction: column;
-
   text-align: start;
   line-height: var(--size-line-height-small);
-
   border-radius: 8px;
   padding: 4px 8px;
 
-  ----color-chechbox-bg: var(--color-date-picker-bg);
+  --color-chechbox-bg: var(--color-date-picker-bg);
 
   &__date {
     font-weight: 600;

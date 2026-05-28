@@ -63,7 +63,6 @@ onMounted(() => {
   display: grid;
   grid-template-rows: auto 1fr;
   gap: 33px;
-
   height: 100%;
   min-height: 0;
 }

@@ -27,8 +27,10 @@ const collectCheckboxes = () => {
 
   const nodes = slots.default()
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   nodes.forEach((node: any) => {
     if (node.type === Fragment && Array.isArray(node.children)) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       node.children.forEach((child: any) => {
         result.push({
           value: child.props?.value,
